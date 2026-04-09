@@ -261,6 +261,15 @@ function buildCheckboxGroup(containerId, pastas, prefix, singleSelect = false) {
   });
 }
 
+function syncCheckboxGridClasses(containerId) {
+  const el = $(containerId);
+  if (!el) return;
+  el.querySelectorAll('input').forEach((input) => {
+    const label = input.closest('label');
+    if (label) label.classList.toggle('is-checked', input.checked);
+  });
+}
+
 // Build pasta filter checkboxes (admin.html)
 buildCheckboxGroup('filtro-pastas', PASTAS, 'fpasta');
 
@@ -488,6 +497,8 @@ function popularForm(casal) {
       if (cb) cb.checked = true;
     });
   }
+
+  ['pastas-servidas', 'pastas-coordenadas', 'pasta-dirigente', 'pastas-gostaria'].forEach(syncCheckboxGridClasses);
 }
 
 /* ===================================================
@@ -791,6 +802,63 @@ function abrirVisualizacao(c) {
 }
 
 /* ===================================================
+   CHECKBOX GRID – checked-state class fallback
+   Toggles .is-checked on labels for browsers without :has() support
+   =================================================== */
+
+document.addEventListener('change', (e) => {
+  if (e.target.matches('.checkbox-grid input')) {
+    const label = e.target.closest('label');
+    if (label) label.classList.toggle('is-checked', e.target.checked);
+  }
+});
+
+/* ===================================================
+   CSV EXPORT  (admin.html)
+   =================================================== */
+
+function gerarCSV(lista) {
+  const header = [
+    'Esposo', 'Esposa', 'Tel. Esposo', 'Tel. Esposa',
+    'Endereço', 'Ano Retiro', 'Já Serviu', 'Pastas Servidas',
+    'Coordenador', 'Pastas Coordenadas', 'Dirigente',
+    'Ano Dirigente', 'Pasta Dirigente', 'Pastoral', 'Gostaria de Servir em',
+  ];
+  const rows = lista.map((c) => [
+    c.nomeEsposo || '',
+    c.nomeEsposa || '',
+    c.telEsposo  || '',
+    c.telEsposa  || '',
+    c.endereco   || '',
+    c.anoRetiro  || '',
+    c.jaServiu ? 'Sim' : 'Não',
+    (c.pastasServidas      || []).join('; '),
+    c.jaFoiCoordenador ? 'Sim' : 'Não',
+    (c.pastasCoordenadasDe || []).join('; '),
+    c.jaFoiDirigente ? 'Sim' : 'Não',
+    c.anoDirigente    || '',
+    c.pastaDirigente  || '',
+    c.participaPastoral || '',
+    (c.gostariaDeServir || []).join('; '),
+  ]);
+  return [header, ...rows]
+    .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+}
+
+function baixarCSV(nomeArquivo, conteudo) {
+  const blob = new Blob(['\ufeff' + conteudo], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ===================================================
    FILTERS  (admin.html)
    =================================================== */
 
@@ -856,6 +924,40 @@ if (btnAjudaRetiro) {
     );
     if (labelFiltroAtivo) labelFiltroAtivo.textContent = `(Sugestão para: ${pasta})`;
     renderTabelaDirigente(aplicarFiltrosAtivos());
+  });
+}
+
+const btnNuncaServiram        = $('btn-nunca-serviram');
+const btnBaixarSugestao       = $('btn-baixar-sugestao');
+const btnBaixarRelatorioPasta = $('btn-baixar-relatorio-pasta');
+
+if (btnNuncaServiram) {
+  btnNuncaServiram.addEventListener('click', () => {
+    filtroAtivo = (lista) => lista.filter((c) => !c.jaServiu);
+    if (labelFiltroAtivo) labelFiltroAtivo.textContent = '(Nunca Serviram)';
+    renderTabelaDirigente(aplicarFiltrosAtivos());
+  });
+}
+
+if (btnBaixarSugestao) {
+  btnBaixarSugestao.addEventListener('click', () => {
+    const lista = aplicarFiltrosAtivos();
+    if (!lista.length) {
+      alert('Nenhum resultado disponível. Aplique um filtro primeiro.');
+      return;
+    }
+    baixarCSV('sugestao-retiro.csv', gerarCSV(lista));
+  });
+}
+
+if (btnBaixarRelatorioPasta) {
+  btnBaixarRelatorioPasta.addEventListener('click', () => {
+    const lista = aplicarFiltrosAtivos();
+    if (!lista.length) {
+      alert('Nenhum resultado disponível. Aplique um filtro primeiro.');
+      return;
+    }
+    baixarCSV('relatorio-por-pasta.csv', gerarCSV(lista));
   });
 }
 
