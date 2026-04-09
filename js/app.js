@@ -1,6 +1,6 @@
 /**
  * ECC – Encontro de Casais com Cristo
- * Application Logic
+ * Application Logic - Versão Completa
  */
 
 'use strict';
@@ -43,8 +43,8 @@ let filtroAtivo = null;
 function salvar() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(casais));
-  } catch {
-    // Ignore storage errors gracefully
+  } catch (err) {
+    console.error("Erro ao salvar no localStorage", err);
   }
 }
 
@@ -52,7 +52,7 @@ function carregar() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     casais = raw ? JSON.parse(raw) : [];
-  } catch {
+  } catch (err) {
     casais = [];
   }
 }
@@ -70,7 +70,6 @@ function setSenha(nova) {
    =================================================== */
 
 const $   = (id) => document.getElementById(id);
-const $qs = (sel, root = document) => root.querySelector(sel);
 
 // Login overlays
 const overlayEccLogin  = $('overlay-ecc-login');
@@ -96,9 +95,9 @@ const btnNovoCasal  = $('btn-novo-casal');
 const btnOracoes    = $('btn-oracoes');
 
 // Dirigente Panel
-const tbodyDir         = $('tbody-dirigente');
-const msgVazioDir      = $('msg-vazio-dir');
-const btnAddCasalDir   = $('btn-add-casal-dir');
+const tbodyDir          = $('tbody-dirigente');
+const msgVazioDir       = $('msg-vazio-dir');
+const btnAddCasalDir    = $('btn-add-casal-dir');
 const buscarNomeInput  = $('busca-nome');
 const buscarAnoInput   = $('busca-ano');
 const btnBuscar        = $('btn-buscar');
@@ -160,13 +159,17 @@ function logoutDir() {
    =================================================== */
 
 function mostrarEccLogin() {
-  overlayEccLogin.removeAttribute('hidden');
-  document.body.style.overflow = 'hidden';
+  if (overlayEccLogin) {
+    overlayEccLogin.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+  }
 }
 
 function ocultarEccLogin() {
-  overlayEccLogin.setAttribute('hidden', '');
-  document.body.style.overflow = '';
+  if (overlayEccLogin) {
+    overlayEccLogin.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+  }
 }
 
 formEccLogin.addEventListener('submit', (e) => {
@@ -174,7 +177,6 @@ formEccLogin.addEventListener('submit', (e) => {
   const nome = eccLoginNome.value.trim();
   if (!nome) return;
 
-  // Show welcome message briefly then hide overlay
   eccWelcomeMsg.textContent = `Bem-vindo(a), ${nome}! Que Deus abençoe o seu casal. ✝`;
   eccWelcomeMsg.removeAttribute('hidden');
   formEccLogin.hidden = true;
@@ -271,8 +273,10 @@ formMudarSenha.addEventListener('submit', (e) => {
 function ativarTab(tabId) {
   tabBtns.forEach((b) => b.classList.remove('active'));
   tabPanels.forEach((p) => p.classList.remove('active'));
+  
   const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
   if (btn) btn.classList.add('active');
+  
   const panel = $(`tab-${tabId}`);
   if (panel) panel.classList.add('active');
 }
@@ -294,6 +298,7 @@ tabBtns.forEach((btn) => {
 
 function buildCheckboxGroup(containerId, pastas, prefix, singleSelect = false) {
   const el = $(containerId);
+  if (!el) return;
   el.innerHTML = '';
   pastas.forEach((pasta) => {
     const id = `${prefix}-${pasta.replace(/\s+/g, '-').toLowerCase()}`;
@@ -328,9 +333,11 @@ function fecharModal(modal) {
 }
 
 [modalCadastro, modalVisualizar, modalOracoes].forEach((m) => {
-  m.addEventListener('click', (e) => {
-    if (e.target === m) fecharModal(m);
-  });
+  if (m) {
+    m.addEventListener('click', (e) => {
+      if (e.target === m) fecharModal(m);
+    });
+  }
 });
 
 btnFecharModal.addEventListener('click', () => fecharModal(modalCadastro));
@@ -438,22 +445,16 @@ function popularForm(casal) {
   $('modal-titulo').textContent = 'Editar Casal';
   $('casal-id').value = casal.id;
 
-  // Names (new fields, with backward-compat fallback)
   $('campo-nome-esposo').value = casal.nomeEsposo || '';
   $('campo-nome-esposa').value = casal.nomeEsposa || '';
-
-  // Phones
   $('campo-tel-esposo').value = casal.telEsposo || '';
   $('campo-tel-esposa').value = casal.telEsposa || '';
-
   $('campo-endereco').value   = casal.endereco  || '';
   $('campo-ano-retiro').value = casal.anoRetiro || '';
 
-  // Restore photos
   if (casal.fotoEsposo) mostrarPreview($('preview-esposo'), casal.fotoEsposo);
   if (casal.fotoEsposa) mostrarPreview($('preview-esposa'), casal.fotoEsposa);
 
-  // Serviu radio
   if (casal.jaServiu !== null && casal.jaServiu !== undefined) {
     const val = casal.jaServiu ? 'sim' : 'nao';
     const radio = document.querySelector(`input[name="serviu"][value="${val}"]`);
@@ -493,7 +494,7 @@ function popularForm(casal) {
     }
 
     $('campo-pastoral').value = casal.participaPastoral || '';
-  } else if (casal.jaServiu === false) {
+  } else {
     (casal.gostariaDeServir || []).forEach((pasta) => {
       const cb = document.querySelector(`#pastas-gostaria input[value="${pasta}"]`);
       if (cb) cb.checked = true;
@@ -526,8 +527,6 @@ async function coletarFormData() {
   }
 
   const jaServiu = serviuRadio.value === 'sim';
-
-  // Read photos (keep existing if file not changed)
   const existingId = $('casal-id').value;
   const existing   = existingId ? casais.find((c) => c.id === existingId) : null;
 
@@ -537,15 +536,14 @@ async function coletarFormData() {
     || (existing && existing.fotoEsposa ? existing.fotoEsposa : null);
 
   const casal = {
-    id:          existingId || gerarId(),
+    id:           existingId || gerarId(),
     nomeEsposo,
     nomeEsposa,
-    // computed for backward compat display
-    nomes:       [nomeEsposo, nomeEsposa].filter(Boolean).join(' & '),
-    telEsposo:   $('campo-tel-esposo').value.trim(),
-    telEsposa:   $('campo-tel-esposa').value.trim(),
-    contato:     [$('campo-tel-esposo').value.trim(), $('campo-tel-esposa').value.trim()].filter(Boolean).join(' / '),
-    endereco:    $('campo-endereco').value.trim(),
+    nomes:        [nomeEsposo, nomeEsposa].filter(Boolean).join(' & '),
+    telEsposo:    $('campo-tel-esposo').value.trim(),
+    telEsposa:    $('campo-tel-esposa').value.trim(),
+    contato:      [$('campo-tel-esposo').value.trim(), $('campo-tel-esposa').value.trim()].filter(Boolean).join(' / '),
+    endereco:     $('campo-endereco').value.trim(),
     anoRetiro,
     jaServiu,
     fotoEsposo,
@@ -553,42 +551,21 @@ async function coletarFormData() {
   };
 
   if (jaServiu) {
-    casal.pastasServidas = Array.from(
-      document.querySelectorAll('#pastas-servidas input:checked')
-    ).map((i) => i.value);
-
+    casal.pastasServidas = Array.from(document.querySelectorAll('#pastas-servidas input:checked')).map((i) => i.value);
     const coordRadio = document.querySelector('input[name="foi-coord"]:checked');
     casal.jaFoiCoordenador = coordRadio ? coordRadio.value === 'sim' : false;
-
-    casal.pastasCoordenadasDe = casal.jaFoiCoordenador
-      ? Array.from(document.querySelectorAll('#pastas-coordenadas input:checked')).map((i) => i.value)
-      : [];
-
+    casal.pastasCoordenadasDe = casal.jaFoiCoordenador ? Array.from(document.querySelectorAll('#pastas-coordenadas input:checked')).map((i) => i.value) : [];
+    
     const dirig = document.querySelector('input[name="foi-dirigente"]:checked');
     casal.jaFoiDirigente = dirig ? dirig.value === 'sim' : false;
-
     if (casal.jaFoiDirigente) {
       casal.anoDirigente   = parseInt($('campo-ano-dirigente').value, 10) || null;
       const pdRadio = document.querySelector('#pasta-dirigente input:checked');
       casal.pastaDirigente = pdRadio ? pdRadio.value : '';
-    } else {
-      casal.anoDirigente   = null;
-      casal.pastaDirigente = '';
     }
-
     casal.participaPastoral = $('campo-pastoral').value.trim();
-    casal.gostariaDeServir  = [];
   } else {
-    casal.pastasServidas      = [];
-    casal.jaFoiCoordenador    = false;
-    casal.pastasCoordenadasDe = [];
-    casal.jaFoiDirigente      = false;
-    casal.anoDirigente        = null;
-    casal.pastaDirigente      = '';
-    casal.participaPastoral   = '';
-    casal.gostariaDeServir    = Array.from(
-      document.querySelectorAll('#pastas-gostaria input:checked')
-    ).map((i) => i.value);
+    casal.gostariaDeServir = Array.from(document.querySelectorAll('#pastas-gostaria input:checked')).map((i) => i.value);
   }
 
   return casal;
@@ -620,31 +597,15 @@ btnSalvar.addEventListener('click', async () => {
    =================================================== */
 
 function getNomesCasal(c) {
-  if (c.nomeEsposo || c.nomeEsposa) {
-    return [c.nomeEsposo, c.nomeEsposa].filter(Boolean).join(' & ');
-  }
-  return c.nomes || '—';
+  return [c.nomeEsposo, c.nomeEsposa].filter(Boolean).join(' & ') || c.nomes || '—';
 }
 
-function getEsposo(c) {
-  return c.nomeEsposo || (c.nomes ? c.nomes.split(/\s*[&e]\s*/i)[0] : '') || '—';
-}
-
-function getEsposa(c) {
-  if (c.nomeEsposa) return c.nomeEsposa;
-  if (c.nomes) {
-    const parts = c.nomes.split(/\s*[&e]\s*/i);
-    return parts[1] ? parts[1].trim() : '—';
-  }
-  return '—';
-}
+function getEsposo(c) { return c.nomeEsposo || '—'; }
+function getEsposa(c) { return c.nomeEsposa || '—'; }
 
 function getTelefones(c) {
-  const parts = [];
-  if (c.telEsposo) parts.push(c.telEsposo);
-  if (c.telEsposa) parts.push(c.telEsposa);
-  if (parts.length) return parts.join(' / ');
-  return c.contato || '—';
+  const parts = [c.telEsposo, c.telEsposa].filter(Boolean);
+  return parts.length ? parts.join(' / ') : (c.contato || '—');
 }
 
 function avatarHtml(dataUrl, alt) {
@@ -653,13 +614,11 @@ function avatarHtml(dataUrl, alt) {
 }
 
 function badgeSim(val) {
-  return val
-    ? '<span class="badge badge-sim">Sim</span>'
-    : '<span class="badge badge-nao">Não</span>';
+  return val ? '<span class="badge badge-sim">Sim</span>' : '<span class="badge badge-nao">Não</span>';
 }
 
 /* ===================================================
-   RENDER ECC TABLE
+   RENDER TABLES
    =================================================== */
 
 function renderTabela() {
@@ -673,10 +632,7 @@ function renderTabela() {
   casais.forEach((c) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="fotos-cell">
-        ${avatarHtml(c.fotoEsposo, getEsposo(c))}
-        ${avatarHtml(c.fotoEsposa, getEsposa(c))}
-      </td>
+      <td class="fotos-cell">${avatarHtml(c.fotoEsposo, getEsposo(c))} ${avatarHtml(c.fotoEsposa, getEsposa(c))}</td>
       <td>${esc(getEsposo(c))}</td>
       <td>${esc(getEsposa(c))}</td>
       <td>${esc(getTelefones(c))}</td>
@@ -691,12 +647,6 @@ function renderTabela() {
     tbodyEcc.appendChild(tr);
   });
 }
-
-tbodyEcc.addEventListener('click', handleRowAction);
-
-/* ===================================================
-   RENDER DIRIGENTE TABLE
-   =================================================== */
 
 function renderTabelaDirigente(lista) {
   tbodyDir.innerHTML = '';
@@ -726,10 +676,8 @@ function renderTabelaDirigente(lista) {
   });
 }
 
-tbodyDir.addEventListener('click', handleRowAction);
-
 /* ===================================================
-   ROW ACTIONS (shared)
+   ACTIONS HANDLER
    =================================================== */
 
 function handleRowAction(e) {
@@ -751,21 +699,10 @@ function handleRowAction(e) {
   }
 }
 
-/* ===================================================
-   OPEN NEW / EDIT
-   =================================================== */
+tbodyEcc.addEventListener('click', handleRowAction);
+tbodyDir.addEventListener('click', handleRowAction);
 
-function abrirNovoCadastro() {
-  resetForm();
-  abrirModal(modalCadastro);
-}
-
-function abrirEdicao(casal) {
-  resetForm();
-  popularForm(casal);
-  abrirModal(modalCadastro);
-}
-
+function abrirNovoCadastro() { resetForm(); abrirModal(modalCadastro); }
 btnNovoCasal.addEventListener('click', abrirNovoCadastro);
 btnAddCasalDir.addEventListener('click', abrirNovoCadastro);
 
@@ -775,26 +712,24 @@ btnAddCasalDir.addEventListener('click', abrirNovoCadastro);
 
 function abrirVisualizacao(c) {
   const sim = (v) => v ? 'Sim' : 'Não';
-
   const fotosHtml = `
     <div class="view-fotos">
       <div class="view-foto-item">
-        ${c.fotoEsposo ? `<img src="${c.fotoEsposo}" class="foto-avatar foto-avatar-lg" alt="Foto do Esposo" />` : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
+        ${c.fotoEsposo ? `<img src="${c.fotoEsposo}" class="foto-avatar foto-avatar-lg" />` : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
         <p class="view-foto-label">Esposo</p>
       </div>
       <div class="view-foto-item">
-        ${c.fotoEsposa ? `<img src="${c.fotoEsposa}" class="foto-avatar foto-avatar-lg" alt="Foto da Esposa" />` : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
+        ${c.fotoEsposa ? `<img src="${c.fotoEsposa}" class="foto-avatar foto-avatar-lg" />` : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
         <p class="view-foto-label">Esposa</p>
       </div>
     </div>`;
 
-  let html = `
-    ${fotosHtml}
+  let html = `${fotosHtml}
     <div class="view-section">
       <h4>Identificação</h4>
       <div class="view-row"><span class="view-label">Esposo:</span><span class="view-val">${esc(getEsposo(c))}</span></div>
       <div class="view-row"><span class="view-label">Esposa:</span><span class="view-val">${esc(getEsposa(c))}</span></div>
-      <div class="view-row"><span class="view-label">Tel. Esposo:</span><span class="view-val">${esc(c.telEsposo || c.contato || '—')}</span></div>
+      <div class="view-row"><span class="view-label">Tel. Esposo:</span><span class="view-val">${esc(c.telEsposo || '—')}</span></div>
       <div class="view-row"><span class="view-label">Tel. Esposa:</span><span class="view-val">${esc(c.telEsposa || '—')}</span></div>
       <div class="view-row"><span class="view-label">Endereço:</span><span class="view-val">${esc(c.endereco || '—')}</span></div>
       <div class="view-row"><span class="view-label">Ano do Retiro:</span><span class="view-val">${c.anoRetiro}</span></div>
@@ -804,21 +739,16 @@ function abrirVisualizacao(c) {
     html += `
     <div class="view-section">
       <h4>Serviço no Retiro</h4>
-      <div class="view-row"><span class="view-label">Já serviu:</span><span class="view-val">${sim(c.jaServiu)}</span></div>
-      <div class="view-row"><span class="view-label">Pastas servidas:</span><span class="view-val">${esc((c.pastasServidas || []).join(', ') || '—')}</span></div>
-      <div class="view-row"><span class="view-label">Já foi coordenador:</span><span class="view-val">${sim(c.jaFoiCoordenador)}</span></div>
-      ${c.jaFoiCoordenador ? `<div class="view-row"><span class="view-label">Pastas coordenadas:</span><span class="view-val">${esc((c.pastasCoordenadasDe || []).join(', ') || '—')}</span></div>` : ''}
-      <div class="view-row"><span class="view-label">Já foi dirigente:</span><span class="view-val">${sim(c.jaFoiDirigente)}</span></div>
-      ${c.jaFoiDirigente ? `
-        <div class="view-row"><span class="view-label">Ano como dirigente:</span><span class="view-val">${c.anoDirigente || '—'}</span></div>
-        <div class="view-row"><span class="view-label">Pasta como dirigente:</span><span class="view-val">${esc(c.pastaDirigente || '—')}</span></div>` : ''}
-      <div class="view-row"><span class="view-label">Pastoral / Serviço:</span><span class="view-val">${esc(c.participaPastoral || '—')}</span></div>
+      <div class="view-row"><span class="view-label">Pastas:</span><span class="view-val">${esc((c.pastasServidas || []).join(', ') || '—')}</span></div>
+      <div class="view-row"><span class="view-label">Coordenador:</span><span class="view-val">${sim(c.jaFoiCoordenador)}</span></div>
+      ${c.jaFoiCoordenador ? `<div class="view-row"><span class="view-label">Pastas Coordenadas:</span><span class="view-val">${esc((c.pastasCoordenadasDe || []).join(', '))}</span></div>` : ''}
+      <div class="view-row"><span class="view-label">Dirigente:</span><span class="view-val">${sim(c.jaFoiDirigente)}</span></div>
+      ${c.jaFoiDirigente ? `<div class="view-row"><span class="view-label">Pasta Dirigente:</span><span class="view-val">${c.pastaDirigente} (${c.anoDirigente})</span></div>` : ''}
     </div>`;
   } else {
     html += `
     <div class="view-section">
-      <h4>Serviço no Retiro</h4>
-      <div class="view-row"><span class="view-label">Já serviu:</span><span class="view-val">Não</span></div>
+      <h4>Interesse</h4>
       <div class="view-row"><span class="view-label">Gostaria de servir em:</span><span class="view-val">${esc((c.gostariaDeServir || []).join(', ') || '—')}</span></div>
     </div>`;
   }
@@ -828,119 +758,57 @@ function abrirVisualizacao(c) {
 }
 
 /* ===================================================
-   FILTERS – DIRIGENTE PANEL
+   FILTERS
    =================================================== */
 
-function aplicarFiltrosAtivos() {
-  return filtroAtivo ? filtroAtivo(casais) : casais;
-}
+function aplicarFiltrosAtivos() { return filtroAtivo ? filtroAtivo(casais) : casais; }
 
 btnBuscar.addEventListener('click', () => {
   const nome = buscarNomeInput.value.trim().toLowerCase();
   const ano  = parseInt(buscarAnoInput.value, 10);
-
   filtroAtivo = (lista) => lista.filter((c) => {
-    const nomes = getNomesCasal(c).toLowerCase();
-    const matchNome = !nome || nomes.includes(nome);
-    const matchAno  = !ano  || c.anoRetiro === ano;
-    return matchNome && matchAno;
+    const nomesMatch = getNomesCasal(c).toLowerCase().includes(nome);
+    const anoMatch = !ano || c.anoRetiro === ano;
+    return nomesMatch && anoMatch;
   });
-
-  const desc = [];
-  if (nome) desc.push(`nome: "${nome}"`);
-  if (ano)  desc.push(`ano: ${ano}`);
-  labelFiltroAtivo.textContent = desc.length ? `(filtro: ${desc.join(', ')})` : '';
-
+  labelFiltroAtivo.textContent = '(Busca Ativa)';
   renderTabelaDirigente(aplicarFiltrosAtivos());
 });
 
 btnLimparBusca.addEventListener('click', () => {
-  buscarNomeInput.value = '';
-  buscarAnoInput.value  = '';
-  filtroAtivo = null;
-  labelFiltroAtivo.textContent = '';
-  renderTabelaDirigente(casais);
-});
-
-btnFiltrarPerfil.addEventListener('click', () => {
-  const selecionado = document.querySelector('input[name="filtro-perfil"]:checked');
-  if (!selecionado) { alert('Selecione uma opção de perfil.'); return; }
-
-  const perfilLabels = {
-    'nunca-serviu':       'Nunca serviu',
-    'nunca-coordenador':  'Nunca foi coordenador',
-    'nunca-dirigente':    'Nunca foi dirigente',
-  };
-
-  const val = selecionado.value;
-  filtroAtivo = (lista) => lista.filter((c) => {
-    if (val === 'nunca-serviu')      return !c.jaServiu;
-    if (val === 'nunca-coordenador') return !c.jaFoiCoordenador;
-    if (val === 'nunca-dirigente')   return !c.jaFoiDirigente;
-    return true;
-  });
-
-  labelFiltroAtivo.textContent = `(filtro: ${perfilLabels[val]})`;
-  renderTabelaDirigente(aplicarFiltrosAtivos());
-});
-
-btnLimparPerfil.addEventListener('click', () => {
-  document.querySelectorAll('input[name="filtro-perfil"]').forEach((r) => r.checked = false);
-  filtroAtivo = null;
-  labelFiltroAtivo.textContent = '';
+  buscarNomeInput.value = ''; buscarAnoInput.value = '';
+  filtroAtivo = null; labelFiltroAtivo.textContent = '';
   renderTabelaDirigente(casais);
 });
 
 btnAplicarPastas.addEventListener('click', () => {
-  const selecionadas = Array.from(
-    document.querySelectorAll('#filtro-pastas input:checked')
-  ).map((i) => i.value);
-
-  if (selecionadas.length === 0) {
-    filtroAtivo = null;
-    labelFiltroAtivo.textContent = '';
-    renderTabelaDirigente(casais);
-    return;
+  const selecionadas = Array.from(document.querySelectorAll('#filtro-pastas input:checked')).map(i => i.value);
+  if (selecionadas.length === 0) { filtroAtivo = null; }
+  else {
+    filtroAtivo = (lista) => lista.filter(c => selecionadas.some(p => (c.pastasServidas || []).includes(p)));
+    labelFiltroAtivo.textContent = `(Pastas: ${selecionadas.join(', ')})`;
   }
-
-  filtroAtivo = (lista) => lista.filter((c) =>
-    selecionadas.some((p) => (c.pastasServidas || []).includes(p))
-  );
-
-  labelFiltroAtivo.textContent = `(pastas: ${selecionadas.join(', ')})`;
   renderTabelaDirigente(aplicarFiltrosAtivos());
 });
 
 /* ===================================================
-   UTILITIES
+   UTILITIES & INIT
    =================================================== */
 
 function esc(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function gerarId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
-/* ===================================================
-   INIT
-   =================================================== */
+function gerarId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
 carregar();
 configurarSecoesCond();
 renderTabela();
 renderTabelaDirigente(casais);
 
-// Restore ECC login state from session
 if (isEccLogado()) {
   ocultarEccLogin();
-  const nome = sessionStorage.getItem('ecc_casal_nome');
-  if (nome) eccNomeLogado.textContent = `Olá, ${nome}!`;
+  eccNomeLogado.textContent = `Olá, ${sessionStorage.getItem('ecc_casal_nome')}!`;
 } else {
   mostrarEccLogin();
 }
