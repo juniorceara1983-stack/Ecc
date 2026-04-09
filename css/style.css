@@ -1,19 +1,18 @@
 /* =====================================================
    ECC – Encontro de Casais com Cristo
-   Stylesheet Otimizada
+   Stylesheet - Versão Premium Refinada
    ===================================================== */
 
 /* ---------- Reset & Base ---------- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --brand:       #7b2d8b;   /* Roxo ECC Principal */
+  --brand:       #7b2d8b;   /* Roxo ECC */
   --brand-dark:  #5a1f68;
   --brand-light: #f3e8f7;
-  --accent:      #e8a020;   /* Dourado/Laranja */
+  --accent:      #e8a020;   /* Ouro/Laranja */
   --danger:      #ef4444;
   --success:     #10b981;
-  --warning:     #f59e0b;
   --gray-50:     #fafafa;
   --gray-100:    #f3f4f6;
   --gray-200:    #e5e7eb;
@@ -21,11 +20,11 @@
   --gray-600:    #4b5563;
   --gray-800:    #1f2937;
   --text:        #111827;
-  --radius:      10px;
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.1);
-  --shadow:      0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-  --shadow-lg:   0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-  --transition:  all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --radius:      12px;
+  --shadow-sm:   0 2px 4px rgba(0,0,0,0.05);
+  --shadow:      0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg:   0 10px 25px rgba(0,0,0,0.15);
+  --transition:  all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -34,7 +33,7 @@ body {
   color: var(--text);
   background: var(--gray-100);
   min-height: 100vh;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* ---------- Header & Tabs ---------- */
@@ -45,8 +44,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem;
   box-shadow: var(--shadow);
   position: sticky;
   top: 0;
@@ -54,24 +51,24 @@ body {
 }
 
 .app-header h1 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  padding: 1rem 0;
-  letter-spacing: -0.025em;
+  padding: 1.2rem 0;
+  letter-spacing: -0.5px;
 }
 
 .app-header h1 span {
   font-weight: 300;
-  font-size: 0.95rem;
-  opacity: 0.9;
-  margin-left: 0.5rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-left: 0.6rem;
   border-left: 1px solid rgba(255,255,255,0.3);
-  padding-left: 0.5rem;
+  padding-left: 0.6rem;
 }
 
 .tabs {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.5rem;
   align-self: flex-end;
 }
 
@@ -79,10 +76,10 @@ body {
   background: transparent;
   color: rgba(255,255,255,0.7);
   border: none;
-  padding: 0.75rem 1.25rem;
+  padding: 0.8rem 1.4rem;
   border-radius: var(--radius) var(--radius) 0 0;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   transition: var(--transition);
 }
@@ -92,118 +89,131 @@ body {
 .tab-btn.active {
   background: var(--gray-100);
   color: var(--brand-dark);
-  box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.05);
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
 }
 
-/* ---------- Tab Panels ---------- */
-.tab-panel { display: none; padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
-.tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ---------- Buttons Otimizados ---------- */
+/* ---------- Buttons (MELHORADOS) ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+  padding: 0.7rem 1.4rem;
   border-radius: var(--radius);
-  border: 1px solid transparent;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
-  white-space: nowrap;
-  user-select: none;
+  box-shadow: var(--shadow-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-.btn:active { transform: scale(0.96); }
+.btn:active { transform: scale(0.95); }
 
 .btn-primary {
   background: var(--brand);
   color: #fff;
-  box-shadow: var(--shadow-sm);
 }
 .btn-primary:hover { 
   background: var(--brand-dark); 
-  box-shadow: var(--shadow);
+  box-shadow: 0 6px 15px rgba(123, 45, 139, 0.3);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
   background: var(--accent);
   color: #fff;
-  box-shadow: var(--shadow-sm);
 }
 .btn-secondary:hover { 
-  filter: brightness(1.05); 
-  box-shadow: var(--shadow);
+  filter: brightness(1.05);
+  box-shadow: 0 6px 15px rgba(232, 160, 32, 0.3);
+  transform: translateY(-1px);
 }
 
 .btn-outline {
   background: #fff;
   color: var(--brand);
-  border: 1px solid var(--brand);
+  border: 2px solid var(--brand);
 }
-.btn-outline:hover { background: var(--brand-light); }
+.btn-outline:hover { 
+  background: var(--brand-light); 
+}
 
 .btn-danger {
   background: var(--danger);
   color: #fff;
 }
-.btn-danger:hover { background: #dc2626; }
 
-.btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px; }
+.btn-sm { padding: 0.4rem 0.9rem; font-size: 0.75rem; border-radius: 8px; }
 
-.btn-block { width: 100%; }
-
-/* ---------- Quick Access (Botões Modernos) ---------- */
+/* ---------- Quick Access (Botões de Atalho) ---------- */
 .quick-access {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
 .btn-quick {
+  flex: 1;
+  min-width: 160px;
   background: #fff;
-  color: var(--gray-800);
+  color: var(--brand-dark);
   border: 1px solid var(--gray-200);
-  padding: 0.75rem 1.25rem;
+  padding: 1rem;
   border-radius: var(--radius);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
   text-decoration: none;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   box-shadow: var(--shadow-sm);
+  transition: var(--transition);
 }
 
 .btn-quick:hover {
   border-color: var(--brand);
-  color: var(--brand);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow);
 }
 
-.btn-quick i, .btn-quick span.icon {
-  font-size: 1.2rem;
-  color: var(--brand);
+.btn-quick span.icon { font-size: 1.5rem; }
+
+/* ---------- Dirigente Tools (Cards) ---------- */
+.tool-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  border: 1px solid rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* ---------- Tables ---------- */
+.tool-card h3 {
+  font-size: 1.1rem;
+  color: var(--brand-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tool-card h3::before {
+  content: '●';
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
+/* ---------- Tabelas ---------- */
 .table-wrapper {
   background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
-  border: 1px solid var(--gray-200);
+  margin-top: 1rem;
 }
 
 table { width: 100%; border-collapse: collapse; }
@@ -212,143 +222,47 @@ thead th {
   background: var(--gray-50);
   color: var(--gray-600);
   text-align: left;
-  padding: 0.875rem 1rem;
-  font-size: 0.75rem;
+  padding: 1rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 2px solid var(--gray-100);
 }
 
-tbody tr { border-bottom: 1px solid var(--gray-100); transition: var(--transition); }
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: var(--brand-light); opacity: 0.95; }
+tbody tr { transition: var(--transition); border-bottom: 1px solid var(--gray-100); }
+tbody tr:hover { background: #fdfaff; }
 
-tbody td { padding: 1rem; font-size: 0.9rem; color: var(--gray-800); }
-
-/* ---------- Modais Modernos ---------- */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 1.5rem;
-}
-
-.modal {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-  max-width: 600px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  animation: modalScale 0.3s ease-out;
-}
-
-@keyframes modalScale {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.modal-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--gray-200);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-header h2 { font-size: 1.25rem; font-weight: 700; color: var(--gray-800); }
-
-.modal-body { padding: 1.5rem; overflow-y: auto; }
-
-.modal-footer {
-  padding: 1rem 1.5rem;
-  background: var(--gray-50);
-  border-top: 1px solid var(--gray-200);
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  border-radius: 0 0 16px 16px;
-}
-
-/* ---------- Forms Otimizados ---------- */
-form label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--gray-700);
-  margin-bottom: 0.4rem;
-}
-
-form input[type="text"],
-form input[type="password"],
-form input[type="number"],
-form textarea,
-form select {
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius);
-  font-size: 0.95rem;
-  transition: var(--transition);
-  background-color: #fff;
-}
-
-form input:focus, form textarea:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px var(--brand-light);
-}
-
-/* ---------- Badges ---------- */
-.badge {
-  padding: 0.25rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-.badge-sim { background: #dcfce7; color: #166534; }
-.badge-nao { background: #fee2e2; color: #991b1b; }
+tbody td { padding: 1.1rem 1rem; font-size: 0.95rem; }
 
 /* ---------- Login Moderno ---------- */
-.login-overlay {
-  background: linear-gradient(135deg, var(--brand-dark) 0%, #2e1065 100%);
-}
-
 .login-box {
   background: #fff;
-  border-radius: 20px;
-  padding: 2.5rem;
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
 }
 
 .login-logo {
-  width: 64px;
-  height: 64px;
+  font-size: 3.5rem;
   background: var(--brand-light);
-  color: var(--brand);
-  border-radius: 12px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  border-radius: 20px;
   margin: 0 auto 1.5rem;
+  color: var(--brand);
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 640px) {
+/* ---------- Responsividade ---------- */
+@media (max-width: 600px) {
   .app-header { padding: 0.5rem 1rem; }
-  .tabs { width: 100%; overflow-x: auto; }
-  .tab-btn { flex: 1; padding: 0.6rem; font-size: 0.8rem; }
+  .tab-btn { padding: 0.8rem 0.5rem; font-size: 0.85rem; flex: 1; text-align: center; }
   .quick-access { display: grid; grid-template-columns: 1fr 1fr; }
-  .modal { max-height: 95vh; margin: 0; border-radius: 20px 20px 0 0; position: absolute; bottom: 0; }
+  .btn-quick { min-width: unset; }
+  .modal { border-radius: 20px 20px 0 0; max-height: 95vh; }
 }
