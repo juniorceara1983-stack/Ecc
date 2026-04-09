@@ -48,7 +48,7 @@
       <div class="tool-card">
         <h3>Buscar</h3>
         <input type="text" id="busca-nome" class="form-control" placeholder="Nome do casal..." />
-        <input type="number" id="busca-ano" class="form-control" placeholder="Ano do retiro..." min="1980" max="2099" style="margin-top:0.5rem;" />
+        <input type="number" id="busca-ano" class="form-control mt-half" placeholder="Ano do retiro..." min="1980" max="2099" />
         <span id="label-filtro-ativo" class="label-filtro-ativo"></span>
         <button id="btn-buscar" class="btn btn-secondary btn-block">Filtrar</button>
         <button id="btn-limpar-busca" class="btn btn-outline btn-block">Limpar</button>
@@ -80,17 +80,17 @@
       <div id="msg-vazio-dir" class="msg-vazio">Nenhum casal encontrado.</div>
     </div>
 
-    <div class="tool-card" style="margin-top:2rem; max-width:480px;">
+    <div class="tool-card mt-2 card-narrow">
       <h3>🔑 Alterar Senha do Painel</h3>
       <form id="form-mudar-senha">
         <label>Senha Atual
           <input type="password" id="senha-atual" class="form-control" placeholder="••••••" required autocomplete="current-password" />
         </label>
-        <label style="margin-top:0.75rem;">Nova Senha
+        <label class="mt-half">Nova Senha
           <input type="password" id="senha-nova" class="form-control" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" />
         </label>
         <p id="mudar-senha-msg" class="mudar-senha-msg" hidden></p>
-        <button type="submit" class="btn btn-primary btn-block" style="margin-top:1rem;">Alterar Senha</button>
+        <button type="submit" class="btn btn-primary btn-block mt-1">Alterar Senha</button>
       </form>
     </div>
   </main>

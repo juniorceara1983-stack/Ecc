@@ -832,6 +832,12 @@ tbody td { padding: 1rem; font-size: 0.9rem; vertical-align: middle; }
   line-height: 1.7;
 }
 
+/* ---------- Utility ---------- */
+.mt-half { margin-top: 0.5rem; }
+.mt-1    { margin-top: 1rem; }
+.mt-2    { margin-top: 2rem; }
+.card-narrow { max-width: 480px; }
+
 /* ---------- Responsividade ---------- */
 @media (max-width: 700px) {
   .app-header { padding: 0.5rem 1rem; }
