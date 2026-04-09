@@ -35,6 +35,11 @@ var CABECALHO_CASAIS = [
   'Última Atualização',
 ];
 
+// Índices das colunas (0-based), derivados do cabeçalho para evitar fragilidade
+var COL_ID        = CABECALHO_CASAIS.indexOf('ID');
+var COL_JA_SERVIU = CABECALHO_CASAIS.indexOf('Já Serviu');
+var COL_EQUIPES   = CABECALHO_CASAIS.indexOf('Equipes de Trabalho');
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getSpreadsheet() {
@@ -153,7 +158,7 @@ function sincronizarCasais(sheet, casais) {
   var dados     = sheet.getDataRange().getValues();
   var mapaLinhas = {};
   for (var i = 1; i < dados.length; i++) {
-    var id = dados[i][0];
+    var id = dados[i][COL_ID];
     if (id) mapaLinhas[id] = i + 1; // linha 1-indexed
   }
 
@@ -170,7 +175,7 @@ function sincronizarCasais(sheet, casais) {
 function excluirCasal(sheet, id) {
   var dados = sheet.getDataRange().getValues();
   for (var i = dados.length - 1; i >= 1; i--) {
-    if (dados[i][0] === id) {
+    if (dados[i][COL_ID] === id) {
       sheet.deleteRow(i + 1);
       break;
     }
@@ -193,11 +198,10 @@ function exportarCasais(sheet) {
 function gerarSugestoes(sheet, pasta) {
   var dados = sheet.getDataRange().getValues();
   if (dados.length <= 1) return [];
-  var idxEquipes = 8; // coluna "Equipes de Trabalho" (0-indexed)
   return dados.slice(1)
     .filter(function(linha) {
-      if (!pasta) return linha[7] !== 'Sim'; // nunca serviram
-      var equipes = String(linha[idxEquipes] || '').split(';').map(function(s){ return s.trim(); });
+      if (!pasta) return linha[COL_JA_SERVIU] !== 'Sim';
+      var equipes = String(linha[COL_EQUIPES] || '').split(';').map(function(s){ return s.trim(); });
       return !equipes.includes(pasta);
     })
     .map(function(linha) {
