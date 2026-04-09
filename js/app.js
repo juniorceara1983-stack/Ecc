@@ -25,14 +25,16 @@ const PASTAS = [
   'Coordenação Geral',
 ];
 
-const STORAGE_KEY = 'ecc_casais';
+const STORAGE_KEY     = 'ecc_casais';
+const SENHA_KEY       = 'ecc_dir_senha';
+const SENHA_PADRAO    = 'ecc2024';
 
 /* ===================================================
    STATE
    =================================================== */
 
-let casais = [];          // array of couple objects
-let filtroAtivo = null;   // current filter descriptor (for dirigente panel)
+let casais = [];
+let filtroAtivo = null;
 
 /* ===================================================
    STORAGE HELPERS
@@ -55,12 +57,33 @@ function carregar() {
   }
 }
 
+function getSenha() {
+  return localStorage.getItem(SENHA_KEY) || SENHA_PADRAO;
+}
+
+function setSenha(nova) {
+  localStorage.setItem(SENHA_KEY, nova);
+}
+
 /* ===================================================
    DOM REFERENCES
    =================================================== */
 
 const $   = (id) => document.getElementById(id);
 const $qs = (sel, root = document) => root.querySelector(sel);
+
+// Login overlays
+const overlayEccLogin  = $('overlay-ecc-login');
+const formEccLogin     = $('form-ecc-login');
+const eccLoginNome     = $('ecc-login-nome');
+const eccWelcomeMsg    = $('ecc-welcome-msg');
+const eccNomeLogado    = $('ecc-nome-logado');
+
+const overlayDirLogin  = $('overlay-dir-login');
+const formDirLogin     = $('form-dir-login');
+const dirLoginSenha    = $('dir-login-senha');
+const dirLoginErro     = $('dir-login-erro');
+const btnVoltarEcc     = $('btn-voltar-ecc');
 
 // Tabs
 const tabBtns   = document.querySelectorAll('.tab-btn');
@@ -70,19 +93,25 @@ const tabPanels = document.querySelectorAll('.tab-panel');
 const tbodyEcc      = $('tbody-casais');
 const msgVazioEcc   = $('msg-vazio');
 const btnNovoCasal  = $('btn-novo-casal');
+const btnOracoes    = $('btn-oracoes');
 
 // Dirigente Panel
-const tbodyDir      = $('tbody-dirigente');
-const msgVazioDir   = $('msg-vazio-dir');
-const btnAddCasalDir = $('btn-add-casal-dir');
-const buscarNomeInput = $('busca-nome');
-const buscarAnoInput  = $('busca-ano');
-const btnBuscar       = $('btn-buscar');
-const btnLimparBusca  = $('btn-limpar-busca');
+const tbodyDir         = $('tbody-dirigente');
+const msgVazioDir      = $('msg-vazio-dir');
+const btnAddCasalDir   = $('btn-add-casal-dir');
+const buscarNomeInput  = $('busca-nome');
+const buscarAnoInput   = $('busca-ano');
+const btnBuscar        = $('btn-buscar');
+const btnLimparBusca   = $('btn-limpar-busca');
 const btnFiltrarPerfil = $('btn-filtrar-perfil');
 const btnLimparPerfil  = $('btn-limpar-perfil');
 const btnAplicarPastas = $('btn-aplicar-pastas');
 const labelFiltroAtivo = $('label-filtro-ativo');
+const btnLogoutDir     = $('btn-logout-dir');
+const formMudarSenha   = $('form-mudar-senha');
+const senhaAtualInput  = $('senha-atual');
+const senhaNoveInput   = $('senha-nova');
+const mudarSenhaMsg    = $('mudar-senha-msg');
 
 // Modal cadastro
 const modalCadastro  = $('modal-cadastro');
@@ -97,16 +126,165 @@ const btnFecharView   = $('btn-fechar-view');
 const btnFecharView2  = $('btn-fechar-view2');
 const viewBody        = $('view-body');
 
+// Modal orações
+const modalOracoes      = $('modal-oracoes');
+const btnFecharOracoes  = $('btn-fechar-oracoes');
+const btnFecharOracoes2 = $('btn-fechar-oracoes2');
+
+/* ===================================================
+   SESSION AUTH HELPERS
+   =================================================== */
+
+function isEccLogado() {
+  return !!sessionStorage.getItem('ecc_casal_nome');
+}
+
+function isDirLogado() {
+  return sessionStorage.getItem('ecc_dir_auth') === '1';
+}
+
+function setEccLogado(nome) {
+  sessionStorage.setItem('ecc_casal_nome', nome);
+}
+
+function setDirLogado() {
+  sessionStorage.setItem('ecc_dir_auth', '1');
+}
+
+function logoutDir() {
+  sessionStorage.removeItem('ecc_dir_auth');
+}
+
+/* ===================================================
+   ECC LOGIN
+   =================================================== */
+
+function mostrarEccLogin() {
+  overlayEccLogin.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function ocultarEccLogin() {
+  overlayEccLogin.setAttribute('hidden', '');
+  document.body.style.overflow = '';
+}
+
+formEccLogin.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const nome = eccLoginNome.value.trim();
+  if (!nome) return;
+
+  // Show welcome message briefly then hide overlay
+  eccWelcomeMsg.textContent = `Bem-vindo(a), ${nome}! Que Deus abençoe o seu casal. ✝`;
+  eccWelcomeMsg.removeAttribute('hidden');
+  formEccLogin.hidden = true;
+
+  setEccLogado(nome);
+  eccNomeLogado.textContent = `Olá, ${nome}!`;
+
+  setTimeout(() => {
+    ocultarEccLogin();
+    eccWelcomeMsg.setAttribute('hidden', '');
+    formEccLogin.hidden = false;
+  }, 2200);
+});
+
+/* ===================================================
+   DIRIGENTE LOGIN
+   =================================================== */
+
+function mostrarDirLogin() {
+  overlayDirLogin.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+  dirLoginErro.setAttribute('hidden', '');
+  dirLoginSenha.value = '';
+  dirLoginSenha.focus();
+}
+
+function ocultarDirLogin() {
+  overlayDirLogin.setAttribute('hidden', '');
+  document.body.style.overflow = '';
+}
+
+formDirLogin.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const senha = dirLoginSenha.value;
+  if (senha === getSenha()) {
+    setDirLogado();
+    ocultarDirLogin();
+    ativarTab('dirigente');
+  } else {
+    dirLoginErro.removeAttribute('hidden');
+    dirLoginSenha.value = '';
+    dirLoginSenha.focus();
+  }
+});
+
+btnVoltarEcc.addEventListener('click', () => {
+  ocultarDirLogin();
+  ativarTab('ecc');
+});
+
+btnLogoutDir.addEventListener('click', () => {
+  logoutDir();
+  ativarTab('ecc');
+});
+
+/* ===================================================
+   MUDAR SENHA
+   =================================================== */
+
+formMudarSenha.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const atual = senhaAtualInput.value;
+  const nova  = senhaNoveInput.value.trim();
+
+  mudarSenhaMsg.className = 'mudar-senha-msg';
+  mudarSenhaMsg.removeAttribute('hidden');
+
+  if (atual !== getSenha()) {
+    mudarSenhaMsg.textContent = 'Senha atual incorreta.';
+    mudarSenhaMsg.classList.add('msg-erro');
+    return;
+  }
+  if (!nova || nova.length < 8) {
+    mudarSenhaMsg.textContent = 'A nova senha deve ter pelo menos 8 caracteres.';
+    mudarSenhaMsg.classList.add('msg-erro');
+    return;
+  }
+
+  setSenha(nova);
+  mudarSenhaMsg.textContent = 'Senha alterada com sucesso!';
+  mudarSenhaMsg.classList.add('msg-ok');
+  senhaAtualInput.value = '';
+  senhaNoveInput.value  = '';
+
+  setTimeout(() => {
+    mudarSenhaMsg.setAttribute('hidden', '');
+  }, 3000);
+});
+
 /* ===================================================
    TABS
    =================================================== */
 
+function ativarTab(tabId) {
+  tabBtns.forEach((b) => b.classList.remove('active'));
+  tabPanels.forEach((p) => p.classList.remove('active'));
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+  if (btn) btn.classList.add('active');
+  const panel = $(`tab-${tabId}`);
+  if (panel) panel.classList.add('active');
+}
+
 tabBtns.forEach((btn) => {
   btn.addEventListener('click', () => {
-    tabBtns.forEach((b) => b.classList.remove('active'));
-    tabPanels.forEach((p) => p.classList.remove('active'));
-    btn.classList.add('active');
-    $(`tab-${btn.dataset.tab}`).classList.add('active');
+    const tab = btn.dataset.tab;
+    if (tab === 'dirigente' && !isDirLogado()) {
+      mostrarDirLogin();
+      return;
+    }
+    ativarTab(tab);
   });
 });
 
@@ -149,8 +327,7 @@ function fecharModal(modal) {
   document.body.style.overflow = '';
 }
 
-// Close on overlay click
-[modalCadastro, modalVisualizar].forEach((m) => {
+[modalCadastro, modalVisualizar, modalOracoes].forEach((m) => {
   m.addEventListener('click', (e) => {
     if (e.target === m) fecharModal(m);
   });
@@ -160,27 +337,57 @@ btnFecharModal.addEventListener('click', () => fecharModal(modalCadastro));
 btnCancelar.addEventListener('click', () => fecharModal(modalCadastro));
 btnFecharView.addEventListener('click', () => fecharModal(modalVisualizar));
 btnFecharView2.addEventListener('click', () => fecharModal(modalVisualizar));
+btnFecharOracoes.addEventListener('click', () => fecharModal(modalOracoes));
+btnFecharOracoes2.addEventListener('click', () => fecharModal(modalOracoes));
+btnOracoes.addEventListener('click', () => abrirModal(modalOracoes));
 
-// Close on Escape
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (!modalCadastro.hidden)   fecharModal(modalCadastro);
     if (!modalVisualizar.hidden) fecharModal(modalVisualizar);
+    if (!modalOracoes.hidden)    fecharModal(modalOracoes);
   }
 });
+
+/* ===================================================
+   PHOTO HELPERS
+   =================================================== */
+
+function lerFoto(inputEl, previewEl) {
+  return new Promise((resolve) => {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) { resolve(null); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      mostrarPreview(previewEl, dataUrl);
+      resolve(dataUrl);
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+function mostrarPreview(previewEl, dataUrl) {
+  previewEl.innerHTML = '';
+  if (!dataUrl) return;
+  const img = document.createElement('img');
+  img.className = 'foto-avatar';
+  img.alt = 'Foto';
+  img.setAttribute('src', dataUrl);
+  previewEl.appendChild(img);
+}
 
 /* ===================================================
    CONDITIONAL SECTIONS IN FORM
    =================================================== */
 
 function configurarSecoesCond() {
-  // Serviu / Nunca serviu
   document.querySelectorAll('input[name="serviu"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       const jaServiu = radio.value === 'sim';
       $('secao-ja-serviu').hidden   = !jaServiu;
       $('secao-nunca-serviu').hidden = jaServiu;
-      // reset inner radios when toggling
       if (!jaServiu) {
         document.querySelectorAll('input[name="foi-coord"]').forEach((r) => r.checked = false);
         document.querySelectorAll('input[name="foi-dirigente"]').forEach((r) => r.checked = false);
@@ -190,14 +397,12 @@ function configurarSecoesCond() {
     });
   });
 
-  // Foi coordenador
   document.querySelectorAll('input[name="foi-coord"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       $('secao-coord').hidden = radio.value !== 'sim';
     });
   });
 
-  // Foi dirigente
   document.querySelectorAll('input[name="foi-dirigente"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       $('secao-dirigente').hidden = radio.value !== 'sim';
@@ -212,16 +417,18 @@ function configurarSecoesCond() {
 function resetForm() {
   formCasal.reset();
   $('casal-id').value = '';
-  $('secao-ja-serviu').hidden   = true;
+  $('secao-ja-serviu').hidden    = true;
   $('secao-nunca-serviu').hidden = true;
   $('secao-coord').hidden        = true;
   $('secao-dirigente').hidden    = true;
 
-  // Rebuild dynamic checkbox groups freshly
-  buildCheckboxGroup('pastas-servidas',   PASTAS, 'pserv');
+  $('preview-esposo').innerHTML = '';
+  $('preview-esposa').innerHTML = '';
+
+  buildCheckboxGroup('pastas-servidas',    PASTAS, 'pserv');
   buildCheckboxGroup('pastas-coordenadas', PASTAS, 'pcoord');
-  buildCheckboxGroup('pasta-dirigente',   PASTAS, 'pdir', true); // single select
-  buildCheckboxGroup('pastas-gostaria',   PASTAS, 'pgost');
+  buildCheckboxGroup('pasta-dirigente',    PASTAS, 'pdir', true);
+  buildCheckboxGroup('pastas-gostaria',    PASTAS, 'pgost');
 
   configurarSecoesCond();
   $('modal-titulo').textContent = 'Cadastro de Casal';
@@ -229,11 +436,22 @@ function resetForm() {
 
 function popularForm(casal) {
   $('modal-titulo').textContent = 'Editar Casal';
-  $('casal-id').value        = casal.id;
-  $('campo-nomes').value     = casal.nomes     || '';
-  $('campo-endereco').value  = casal.endereco  || '';
-  $('campo-contato').value   = casal.contato   || '';
+  $('casal-id').value = casal.id;
+
+  // Names (new fields, with backward-compat fallback)
+  $('campo-nome-esposo').value = casal.nomeEsposo || '';
+  $('campo-nome-esposa').value = casal.nomeEsposa || '';
+
+  // Phones
+  $('campo-tel-esposo').value = casal.telEsposo || '';
+  $('campo-tel-esposa').value = casal.telEsposa || '';
+
+  $('campo-endereco').value   = casal.endereco  || '';
   $('campo-ano-retiro').value = casal.anoRetiro || '';
+
+  // Restore photos
+  if (casal.fotoEsposo) mostrarPreview($('preview-esposo'), casal.fotoEsposo);
+  if (casal.fotoEsposa) mostrarPreview($('preview-esposa'), casal.fotoEsposa);
 
   // Serviu radio
   if (casal.jaServiu !== null && casal.jaServiu !== undefined) {
@@ -246,13 +464,11 @@ function popularForm(casal) {
   }
 
   if (casal.jaServiu) {
-    // Pastas servidas
     (casal.pastasServidas || []).forEach((pasta) => {
       const cb = document.querySelector(`#pastas-servidas input[value="${pasta}"]`);
       if (cb) cb.checked = true;
     });
 
-    // Coordenador
     if (casal.jaFoiCoordenador !== null && casal.jaFoiCoordenador !== undefined) {
       const val = casal.jaFoiCoordenador ? 'sim' : 'nao';
       const radio = document.querySelector(`input[name="foi-coord"][value="${val}"]`);
@@ -265,7 +481,6 @@ function popularForm(casal) {
       });
     }
 
-    // Dirigente
     if (casal.jaFoiDirigente !== null && casal.jaFoiDirigente !== undefined) {
       const val = casal.jaFoiDirigente ? 'sim' : 'nao';
       const radio = document.querySelector(`input[name="foi-dirigente"][value="${val}"]`);
@@ -279,7 +494,6 @@ function popularForm(casal) {
 
     $('campo-pastoral').value = casal.participaPastoral || '';
   } else if (casal.jaServiu === false) {
-    // Nunca serviu – gostaria de servir
     (casal.gostariaDeServir || []).forEach((pasta) => {
       const cb = document.querySelector(`#pastas-gostaria input[value="${pasta}"]`);
       if (cb) cb.checked = true;
@@ -291,24 +505,51 @@ function popularForm(casal) {
    COLLECT FORM DATA
    =================================================== */
 
-function coletarFormData() {
-  const nomes = $('campo-nomes').value.trim();
-  if (!nomes) { alert('Por favor, informe os nomes do casal.'); return null; }
+async function coletarFormData() {
+  const nomeEsposo = $('campo-nome-esposo').value.trim();
+  const nomeEsposa = $('campo-nome-esposa').value.trim();
+  if (!nomeEsposo && !nomeEsposa) {
+    alert('Por favor, informe pelo menos o nome de um dos cônjuges.');
+    return null;
+  }
+
   const anoRetiro = parseInt($('campo-ano-retiro').value, 10);
-  if (isNaN(anoRetiro) || anoRetiro <= 0) { alert('Por favor, informe o ano do retiro.'); return null; }
+  if (isNaN(anoRetiro) || anoRetiro <= 0) {
+    alert('Por favor, informe o ano do retiro.');
+    return null;
+  }
 
   const serviuRadio = document.querySelector('input[name="serviu"]:checked');
-  if (!serviuRadio) { alert('Por favor, indique se o casal já serviu no retiro.'); return null; }
+  if (!serviuRadio) {
+    alert('Por favor, indique se o casal já serviu no retiro.');
+    return null;
+  }
 
   const jaServiu = serviuRadio.value === 'sim';
 
+  // Read photos (keep existing if file not changed)
+  const existingId = $('casal-id').value;
+  const existing   = existingId ? casais.find((c) => c.id === existingId) : null;
+
+  const fotoEsposo = await lerFoto($('foto-esposo'), $('preview-esposo'))
+    || (existing && existing.fotoEsposo ? existing.fotoEsposo : null);
+  const fotoEsposa = await lerFoto($('foto-esposa'), $('preview-esposa'))
+    || (existing && existing.fotoEsposa ? existing.fotoEsposa : null);
+
   const casal = {
-    id:           $('casal-id').value || gerarId(),
-    nomes,
-    endereco:     $('campo-endereco').value.trim(),
-    contato:      $('campo-contato').value.trim(),
+    id:          existingId || gerarId(),
+    nomeEsposo,
+    nomeEsposa,
+    // computed for backward compat display
+    nomes:       [nomeEsposo, nomeEsposa].filter(Boolean).join(' & '),
+    telEsposo:   $('campo-tel-esposo').value.trim(),
+    telEsposa:   $('campo-tel-esposa').value.trim(),
+    contato:     [$('campo-tel-esposo').value.trim(), $('campo-tel-esposa').value.trim()].filter(Boolean).join(' / '),
+    endereco:    $('campo-endereco').value.trim(),
     anoRetiro,
     jaServiu,
+    fotoEsposo,
+    fotoEsposa,
   };
 
   if (jaServiu) {
@@ -327,7 +568,7 @@ function coletarFormData() {
     casal.jaFoiDirigente = dirig ? dirig.value === 'sim' : false;
 
     if (casal.jaFoiDirigente) {
-      casal.anoDirigente  = parseInt($('campo-ano-dirigente').value, 10) || null;
+      casal.anoDirigente   = parseInt($('campo-ano-dirigente').value, 10) || null;
       const pdRadio = document.querySelector('#pasta-dirigente input:checked');
       casal.pastaDirigente = pdRadio ? pdRadio.value : '';
     } else {
@@ -357,8 +598,8 @@ function coletarFormData() {
    SAVE COUPLE
    =================================================== */
 
-btnSalvar.addEventListener('click', () => {
-  const data = coletarFormData();
+btnSalvar.addEventListener('click', async () => {
+  const data = await coletarFormData();
   if (!data) return;
 
   const idx = casais.findIndex((c) => c.id === data.id);
@@ -375,14 +616,51 @@ btnSalvar.addEventListener('click', () => {
 });
 
 /* ===================================================
-   RENDER ECC TABLE
+   DISPLAY HELPERS
    =================================================== */
+
+function getNomesCasal(c) {
+  if (c.nomeEsposo || c.nomeEsposa) {
+    return [c.nomeEsposo, c.nomeEsposa].filter(Boolean).join(' & ');
+  }
+  return c.nomes || '—';
+}
+
+function getEsposo(c) {
+  return c.nomeEsposo || (c.nomes ? c.nomes.split(/\s*[&e]\s*/i)[0] : '') || '—';
+}
+
+function getEsposa(c) {
+  if (c.nomeEsposa) return c.nomeEsposa;
+  if (c.nomes) {
+    const parts = c.nomes.split(/\s*[&e]\s*/i);
+    return parts[1] ? parts[1].trim() : '—';
+  }
+  return '—';
+}
+
+function getTelefones(c) {
+  const parts = [];
+  if (c.telEsposo) parts.push(c.telEsposo);
+  if (c.telEsposa) parts.push(c.telEsposa);
+  if (parts.length) return parts.join(' / ');
+  return c.contato || '—';
+}
+
+function avatarHtml(dataUrl, alt) {
+  if (!dataUrl) return `<span class="avatar-placeholder" title="${esc(alt)}">👤</span>`;
+  return `<img src="${dataUrl}" class="foto-avatar foto-avatar-sm" alt="${esc(alt)}" />`;
+}
 
 function badgeSim(val) {
   return val
     ? '<span class="badge badge-sim">Sim</span>'
     : '<span class="badge badge-nao">Não</span>';
 }
+
+/* ===================================================
+   RENDER ECC TABLE
+   =================================================== */
 
 function renderTabela() {
   tbodyEcc.innerHTML = '';
@@ -395,8 +673,13 @@ function renderTabela() {
   casais.forEach((c) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${esc(c.nomes)}</td>
-      <td>${esc(c.contato || '—')}</td>
+      <td class="fotos-cell">
+        ${avatarHtml(c.fotoEsposo, getEsposo(c))}
+        ${avatarHtml(c.fotoEsposa, getEsposa(c))}
+      </td>
+      <td>${esc(getEsposo(c))}</td>
+      <td>${esc(getEsposa(c))}</td>
+      <td>${esc(getTelefones(c))}</td>
       <td>${c.anoRetiro}</td>
       <td>${badgeSim(c.jaServiu)}</td>
       <td>${badgeSim(c.jaFoiDirigente)}</td>
@@ -427,8 +710,9 @@ function renderTabelaDirigente(lista) {
     const pastas = (c.pastasServidas || []).join(', ') || '—';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${esc(c.nomes)}</td>
-      <td>${esc(c.contato || '—')}</td>
+      <td>${esc(getEsposo(c))}</td>
+      <td>${esc(getEsposa(c))}</td>
+      <td>${esc(getTelefones(c))}</td>
       <td>${c.anoRetiro}</td>
       <td>${esc(pastas)}</td>
       <td>${badgeSim(c.jaFoiCoordenador)}</td>
@@ -458,7 +742,7 @@ function handleRowAction(e) {
   if (action === 'ver')    abrirVisualizacao(casal);
   if (action === 'editar') abrirEdicao(casal);
   if (action === 'excluir') {
-    if (confirm(`Excluir o casal "${casal.nomes}"?`)) {
+    if (confirm(`Excluir o casal "${getNomesCasal(casal)}"?`)) {
       casais = casais.filter((c) => c.id !== id);
       salvar();
       renderTabela();
@@ -492,12 +776,27 @@ btnAddCasalDir.addEventListener('click', abrirNovoCadastro);
 function abrirVisualizacao(c) {
   const sim = (v) => v ? 'Sim' : 'Não';
 
+  const fotosHtml = `
+    <div class="view-fotos">
+      <div class="view-foto-item">
+        ${c.fotoEsposo ? `<img src="${c.fotoEsposo}" class="foto-avatar foto-avatar-lg" alt="Foto do Esposo" />` : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
+        <p class="view-foto-label">Esposo</p>
+      </div>
+      <div class="view-foto-item">
+        ${c.fotoEsposa ? `<img src="${c.fotoEsposa}" class="foto-avatar foto-avatar-lg" alt="Foto da Esposa" />` : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
+        <p class="view-foto-label">Esposa</p>
+      </div>
+    </div>`;
+
   let html = `
+    ${fotosHtml}
     <div class="view-section">
       <h4>Identificação</h4>
-      <div class="view-row"><span class="view-label">Nomes:</span><span class="view-val">${esc(c.nomes)}</span></div>
+      <div class="view-row"><span class="view-label">Esposo:</span><span class="view-val">${esc(getEsposo(c))}</span></div>
+      <div class="view-row"><span class="view-label">Esposa:</span><span class="view-val">${esc(getEsposa(c))}</span></div>
+      <div class="view-row"><span class="view-label">Tel. Esposo:</span><span class="view-val">${esc(c.telEsposo || c.contato || '—')}</span></div>
+      <div class="view-row"><span class="view-label">Tel. Esposa:</span><span class="view-val">${esc(c.telEsposa || '—')}</span></div>
       <div class="view-row"><span class="view-label">Endereço:</span><span class="view-val">${esc(c.endereco || '—')}</span></div>
-      <div class="view-row"><span class="view-label">Contato:</span><span class="view-val">${esc(c.contato || '—')}</span></div>
       <div class="view-row"><span class="view-label">Ano do Retiro:</span><span class="view-val">${c.anoRetiro}</span></div>
     </div>`;
 
@@ -536,13 +835,13 @@ function aplicarFiltrosAtivos() {
   return filtroAtivo ? filtroAtivo(casais) : casais;
 }
 
-// Busca por nome / ano
 btnBuscar.addEventListener('click', () => {
   const nome = buscarNomeInput.value.trim().toLowerCase();
   const ano  = parseInt(buscarAnoInput.value, 10);
 
   filtroAtivo = (lista) => lista.filter((c) => {
-    const matchNome = !nome || c.nomes.toLowerCase().includes(nome);
+    const nomes = getNomesCasal(c).toLowerCase();
+    const matchNome = !nome || nomes.includes(nome);
     const matchAno  = !ano  || c.anoRetiro === ano;
     return matchNome && matchAno;
   });
@@ -563,7 +862,6 @@ btnLimparBusca.addEventListener('click', () => {
   renderTabelaDirigente(casais);
 });
 
-// Filtro por perfil
 btnFiltrarPerfil.addEventListener('click', () => {
   const selecionado = document.querySelector('input[name="filtro-perfil"]:checked');
   if (!selecionado) { alert('Selecione uma opção de perfil.'); return; }
@@ -593,7 +891,6 @@ btnLimparPerfil.addEventListener('click', () => {
   renderTabelaDirigente(casais);
 });
 
-// Filtro por pastas
 btnAplicarPastas.addEventListener('click', () => {
   const selecionadas = Array.from(
     document.querySelectorAll('#filtro-pastas input:checked')
@@ -638,3 +935,12 @@ carregar();
 configurarSecoesCond();
 renderTabela();
 renderTabelaDirigente(casais);
+
+// Restore ECC login state from session
+if (isEccLogado()) {
+  ocultarEccLogin();
+  const nome = sessionStorage.getItem('ecc_casal_nome');
+  if (nome) eccNomeLogado.textContent = `Olá, ${nome}!`;
+} else {
+  mostrarEccLogin();
+}

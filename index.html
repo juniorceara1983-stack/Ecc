@@ -7,6 +7,40 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+  <!-- ==================== LOGIN ECC ==================== -->
+  <div id="overlay-ecc-login" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">✝</div>
+      <h2>ECC</h2>
+      <p class="login-subtitle">Encontro de Casais com Cristo</p>
+      <div id="ecc-welcome-msg" class="welcome-msg" hidden></div>
+      <form id="form-ecc-login" class="login-form">
+        <label>Nome do casal
+          <input type="text" id="ecc-login-nome" placeholder="Ex: João e Maria" required autocomplete="off" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIN DIRIGENTE ==================== -->
+  <div id="overlay-dir-login" class="login-overlay" hidden>
+    <div class="login-box">
+      <div class="login-logo">🔒</div>
+      <h2>Painel do Dirigente</h2>
+      <p class="login-subtitle">Acesso restrito</p>
+      <form id="form-dir-login" class="login-form">
+        <label>Senha
+          <input type="password" id="dir-login-senha" placeholder="••••••" required />
+        </label>
+        <p id="dir-login-erro" class="login-erro" hidden>Senha incorreta. Tente novamente.</p>
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        <button type="button" id="btn-voltar-ecc" class="btn btn-outline btn-block">Voltar ao Painel ECC</button>
+      </form>
+    </div>
+  </div>
+
   <!-- ========== HEADER ========== -->
   <header class="app-header">
     <h1>ECC <span>Encontro de Casais com Cristo</span></h1>
@@ -20,10 +54,22 @@
     <!-- ==================== PAINEL ECC ==================== -->
     <section id="tab-ecc" class="tab-panel active">
       <div class="panel-header">
-        <h2>Painel ECC</h2>
-        <button id="btn-novo-casal" class="btn btn-primary">
-          ＋ Cadastrar Casal
-        </button>
+        <div class="panel-header-left">
+          <h2>Painel ECC</h2>
+          <p id="ecc-nome-logado" class="ecc-nome-logado"></p>
+        </div>
+        <button id="btn-novo-casal" class="btn btn-primary">＋ Cadastrar Casal</button>
+      </div>
+
+      <!-- ACESSO RÁPIDO -->
+      <div class="quick-access">
+        <a href="https://cnbb.org.br/liturgia-diaria/" target="_blank" rel="noopener noreferrer" class="btn btn-quick">
+          📖 Liturgia Diária
+        </a>
+        <a href="https://www.vaticannews.va/pt/santo-do-dia.html" target="_blank" rel="noopener noreferrer" class="btn btn-quick">
+          ✨ Santo do Dia
+        </a>
+        <button id="btn-oracoes" class="btn btn-quick">🙏 Orações</button>
       </div>
 
       <!-- TABLE OF COUPLES -->
@@ -31,8 +77,10 @@
         <table id="tabela-casais">
           <thead>
             <tr>
-              <th>Nomes</th>
-              <th>Contato</th>
+              <th>Fotos</th>
+              <th>Esposo</th>
+              <th>Esposa</th>
+              <th>Telefones</th>
               <th>Ano do Retiro</th>
               <th>Já Serviu</th>
               <th>Já foi Dirigente</th>
@@ -51,6 +99,7 @@
     <section id="tab-dirigente" class="tab-panel">
       <div class="panel-header">
         <h2>Painel do Dirigente</h2>
+        <button id="btn-logout-dir" class="btn btn-outline btn-sm">Sair</button>
       </div>
 
       <!-- FERRAMENTAS DO DIRIGENTE -->
@@ -90,6 +139,21 @@
           <button id="btn-filtrar-perfil" class="btn btn-secondary">Filtrar</button>
           <button id="btn-limpar-perfil" class="btn btn-outline">Limpar</button>
         </div>
+
+        <!-- Segurança / Mudar Senha -->
+        <div class="tool-card">
+          <h3>Segurança</h3>
+          <form id="form-mudar-senha" novalidate>
+            <label>Senha atual
+              <input type="password" id="senha-atual" placeholder="••••••" autocomplete="current-password" />
+            </label>
+            <label>Nova senha
+              <input type="password" id="senha-nova" placeholder="••••••" autocomplete="new-password" />
+            </label>
+            <p id="mudar-senha-msg" class="mudar-senha-msg" hidden></p>
+            <button type="submit" class="btn btn-secondary">Salvar nova senha</button>
+          </form>
+        </div>
       </div>
 
       <!-- RESULTS TABLE -->
@@ -101,8 +165,9 @@
         <table id="tabela-dirigente">
           <thead>
             <tr>
-              <th>Nomes</th>
-              <th>Contato</th>
+              <th>Esposo</th>
+              <th>Esposa</th>
+              <th>Telefones</th>
               <th>Ano do Retiro</th>
               <th>Pastas Servidas</th>
               <th>Já Coordenou</th>
@@ -121,7 +186,7 @@
 
   <!-- ==================== MODAL DE CADASTRO ==================== -->
   <div id="modal-cadastro" class="modal-overlay" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
       <div class="modal-header">
         <h2 id="modal-titulo">Cadastro de Casal</h2>
         <button class="btn-fechar" id="btn-fechar-modal" aria-label="Fechar">&times;</button>
@@ -133,18 +198,47 @@
           <!-- Identificação -->
           <fieldset>
             <legend>Identificação</legend>
-            <label>Nomes do casal <span class="obrig">*</span>
-              <input type="text" id="campo-nomes" placeholder="Nome do esposo e nome da esposa" required />
-            </label>
+            <div class="dual-field">
+              <label>Nome do Esposo <span class="obrig">*</span>
+                <input type="text" id="campo-nome-esposo" placeholder="Nome do esposo" required />
+              </label>
+              <label>Nome da Esposa <span class="obrig">*</span>
+                <input type="text" id="campo-nome-esposa" placeholder="Nome da esposa" required />
+              </label>
+            </div>
+            <div class="dual-field">
+              <label>Telefone do Esposo
+                <input type="tel" id="campo-tel-esposo" placeholder="(00) 00000-0000" />
+              </label>
+              <label>Telefone da Esposa
+                <input type="tel" id="campo-tel-esposa" placeholder="(00) 00000-0000" />
+              </label>
+            </div>
             <label>Endereço
               <input type="text" id="campo-endereco" placeholder="Rua, número, bairro, cidade" />
-            </label>
-            <label>Contato (telefone / e-mail)
-              <input type="text" id="campo-contato" placeholder="(00) 00000-0000 / email@exemplo.com" />
             </label>
             <label>Ano em que vivenciou o retiro <span class="obrig">*</span>
               <input type="number" id="campo-ano-retiro" placeholder="Ex: 2022" min="1970" max="2099" required />
             </label>
+          </fieldset>
+
+          <!-- Fotos Individuais -->
+          <fieldset>
+            <legend>Fotos</legend>
+            <div class="dual-field">
+              <div class="foto-item">
+                <label>Foto do Esposo
+                  <input type="file" id="foto-esposo" accept="image/*" />
+                </label>
+                <div class="foto-preview" id="preview-esposo"></div>
+              </div>
+              <div class="foto-item">
+                <label>Foto da Esposa
+                  <input type="file" id="foto-esposa" accept="image/*" />
+                </label>
+                <div class="foto-preview" id="preview-esposa"></div>
+              </div>
+            </div>
           </fieldset>
 
           <!-- Serviço no Retiro -->
@@ -223,6 +317,41 @@
       </div>
       <div class="modal-footer">
         <button type="button" id="btn-fechar-view2" class="btn btn-outline">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL DE ORAÇÕES ==================== -->
+  <div id="modal-oracoes" class="modal-overlay" hidden>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="oracoes-titulo">
+      <div class="modal-header">
+        <h2 id="oracoes-titulo">🙏 Orações</h2>
+        <button class="btn-fechar" id="btn-fechar-oracoes" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="oracao-item">
+          <h4>Pai Nosso</h4>
+          <p>Pai nosso que estais nos céus, santificado seja o vosso nome; venha a nós o vosso reino; seja feita a vossa vontade, assim na terra como no céu. O pão nosso de cada dia nos dai hoje; perdoai-nos as nossas ofensas, assim como nós perdoamos a quem nos tem ofendido; e não nos deixeis cair em tentação, mas livrai-nos do mal. Amém.</p>
+        </div>
+        <div class="oracao-item">
+          <h4>Ave Maria</h4>
+          <p>Ave Maria, cheia de graça, o Senhor é convosco, bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós pecadores, agora e na hora de nossa morte. Amém.</p>
+        </div>
+        <div class="oracao-item">
+          <h4>Glória ao Pai</h4>
+          <p>Glória ao Pai, ao Filho e ao Espírito Santo. Como era no princípio, agora e sempre, por todos os séculos dos séculos. Amém.</p>
+        </div>
+        <div class="oracao-item">
+          <h4>Oração dos Casais</h4>
+          <p>Senhor Jesus, que abençoaste as bodas de Caná, abençoai o nosso lar. Dai-nos sabedoria para compreender que o amor verdadeiro é dom de Deus. Que possamos ser um para o outro sinal do vosso amor, companheiros na caminhada da fé, e espelho do vosso amor misericordioso. Que a nossa família seja uma pequena Igreja, onde Cristo seja o centro e a paz seja o fruto. Amém.</p>
+        </div>
+        <div class="oracao-item">
+          <h4>Ato de Contrição</h4>
+          <p>Meu Deus, porque sois infinitamente bom e digno de todo amor, pesa-me muito de vos ter ofendido. Proponho firmemente, com o auxílio da vossa graça, não vos ofender mais, evitar as ocasiões próximas de pecado e confessar-me. Amém.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-fechar-oracoes2" class="btn btn-outline">Fechar</button>
       </div>
     </div>
   </div>

@@ -417,6 +417,242 @@ form textarea { resize: vertical; }
 .view-label { font-weight: 600; color: var(--gray-600); }
 .view-val   { color: var(--text); }
 
+/* ---------- Panel header left ---------- */
+.panel-header-left { display: flex; flex-direction: column; gap: .15rem; }
+.ecc-nome-logado {
+  font-size: .88rem;
+  color: var(--brand);
+  font-style: italic;
+}
+
+/* ---------- Quick Access Buttons ---------- */
+.quick-access {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin-bottom: 1.25rem;
+}
+
+.btn-quick {
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  border: 2px solid var(--brand);
+  padding: .55rem 1.1rem;
+  border-radius: var(--radius);
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  white-space: nowrap;
+}
+.btn-quick:hover {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* ---------- Login Overlay ---------- */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 1rem;
+}
+.login-overlay[hidden] { display: none !important; }
+
+.login-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 2rem 2.25rem;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.login-logo {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.login-box h2 {
+  font-size: 1.6rem;
+  color: var(--brand-dark);
+  margin: 0;
+}
+
+.login-subtitle {
+  font-size: .9rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  margin-top: .5rem;
+  text-align: left;
+}
+
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.login-form input {
+  padding: .5rem .75rem;
+  border: 1px solid var(--gray-400);
+  border-radius: var(--radius);
+  font-size: .95rem;
+  transition: var(--transition);
+}
+.login-form input:focus {
+  outline: 2px solid var(--brand);
+  border-color: var(--brand);
+}
+
+.btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+.welcome-msg {
+  background: var(--brand-light);
+  border-left: 4px solid var(--brand);
+  padding: .75rem 1rem;
+  border-radius: var(--radius);
+  font-size: .95rem;
+  color: var(--brand-dark);
+  font-weight: 600;
+  text-align: center;
+}
+
+.login-erro {
+  color: var(--danger);
+  font-size: .88rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+}
+
+/* ---------- Dual Field ---------- */
+.dual-field {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+  margin-bottom: .3rem;
+}
+
+/* ---------- Photos ---------- */
+.foto-item {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+
+.foto-preview {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.foto-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--brand-light);
+}
+
+.foto-avatar-sm {
+  width: 36px;
+  height: 36px;
+}
+
+.foto-avatar-lg {
+  width: 80px;
+  height: 80px;
+}
+
+.avatar-placeholder {
+  font-size: 1.8rem;
+  opacity: .4;
+}
+
+.avatar-placeholder-lg {
+  font-size: 3.5rem;
+}
+
+.fotos-cell {
+  display: flex;
+  gap: .3rem;
+  align-items: center;
+}
+
+/* ---------- View Fotos ---------- */
+.view-fotos {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.view-foto-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
+}
+
+.view-foto-label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--brand-dark);
+}
+
+/* ---------- Change Password ---------- */
+.mudar-senha-msg {
+  font-size: .88rem;
+  font-weight: 600;
+  padding: .4rem .6rem;
+  border-radius: var(--radius);
+}
+.mudar-senha-msg.msg-ok   { background: #e8f5e9; color: var(--success); }
+.mudar-senha-msg.msg-erro { background: #ffebee; color: var(--danger); }
+
+/* ---------- Prayers ---------- */
+.oracao-item {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+.oracao-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.oracao-item h4 {
+  font-size: 1rem;
+  color: var(--brand-dark);
+  margin-bottom: .5rem;
+}
+.oracao-item p {
+  font-size: .92rem;
+  line-height: 1.65;
+  color: var(--text);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 600px) {
   .app-header { flex-direction: column; align-items: flex-start; }
@@ -426,4 +662,7 @@ form textarea { resize: vertical; }
   .dirigente-tools { grid-template-columns: 1fr; }
   .view-row { grid-template-columns: 1fr; }
   .view-label { color: var(--brand); }
+  .dual-field { grid-template-columns: 1fr; }
+  .quick-access { flex-direction: column; }
+  .login-box { padding: 1.5rem 1.25rem; }
 }
