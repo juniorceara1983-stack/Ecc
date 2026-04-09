@@ -9,20 +9,27 @@
    CONSTANTS
    =================================================== */
 
+// Equipes de trabalho no retiro (used for service history, coordination, and interest)
 const PASTAS = [
-  'Liturgia',
-  'Secretaria',
+  'Coordenador Geral',
+  'Sala',
+  'Visitação',
+  'Café e Mini Mercado',
+  'Compras',
   'Cozinha',
-  'Acolhida',
-  'Animação',
-  'Decoração',
+  'Ordem e Limpeza',
+  'Secretaria',
+  'Liturgia e Vigília',
+  'Círculos',
+];
+
+// Pastas da equipe dirigente (used only for "Pasta como Dirigente")
+const PASTAS_DIRIGENTE = [
+  'Pós Encontro',
+  'Montagem',
+  'Fichas',
+  'Palestras',
   'Finanças',
-  'Espaço Físico',
-  'Comunicação',
-  'Enfermagem',
-  'Transporte',
-  'Louvor',
-  'Coordenação Geral',
 ];
 
 const STORAGE_KEY  = 'ecc_casais';
@@ -428,10 +435,10 @@ function resetForm() {
   if (prevEsposo) prevEsposo.innerHTML = '';
   if (prevEsposa) prevEsposa.innerHTML = '';
 
-  buildCheckboxGroup('pastas-servidas',    PASTAS, 'pserv');
-  buildCheckboxGroup('pastas-coordenadas', PASTAS, 'pcoord');
-  buildCheckboxGroup('pasta-dirigente',    PASTAS, 'pdir', true);
-  buildCheckboxGroup('pastas-gostaria',    PASTAS, 'pgost');
+  buildCheckboxGroup('pastas-servidas',    PASTAS,           'pserv');
+  buildCheckboxGroup('pastas-coordenadas', PASTAS,           'pcoord');
+  buildCheckboxGroup('pasta-dirigente',    PASTAS_DIRIGENTE, 'pdir', true);
+  buildCheckboxGroup('pastas-gostaria',    PASTAS,           'pgost');
 
   configurarSecoesCond();
   const tituloEl = $('modal-titulo');

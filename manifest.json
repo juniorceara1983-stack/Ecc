@@ -1,0 +1,29 @@
+{
+  "name": "ECC – Encontro de Casais com Cristo",
+  "short_name": "ECC",
+  "description": "Cadastro e acompanhamento de casais do ECC",
+  "start_url": "./index.html",
+  "id": "ecc-casais",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1a5276",
+  "background_color": "#ffffff",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "utilities"]
+}
