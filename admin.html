@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ECC Admin – Painel do Dirigente</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="admin-body">
+
+  <div id="overlay-dir-login" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">🔒</div>
+      <h2>Painel do Dirigente</h2>
+      <p class="login-subtitle">Acesso restrito</p>
+      <form id="form-dir-login" class="login-form">
+        <label>Senha
+          <input type="password" id="dir-login-senha" placeholder="••••••" required />
+        </label>
+        <p id="dir-login-erro" class="login-erro" hidden>Senha incorreta.</p>
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        <a href="index.html" class="btn btn-outline btn-block" style="text-decoration: none; text-align: center; display: block;">Voltar ao Início</a>
+      </form>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <h1>ECC <span>Painel Administrativo</span></h1>
+    <button id="btn-logout-dir" class="btn btn-outline btn-sm">Sair</button>
+  </header>
+
+  <main id="tab-dirigente" class="tab-panel active" hidden>
+    <div class="panel-header">
+      <h2>Gestão de Casais e Retiros</h2>
+      <button id="btn-add-casal-dir" class="btn btn-primary">＋ Adicionar Casal</button>
+    </div>
+
+    <div class="dirigente-tools">
+      <div class="tool-card highlight">
+        <h3>🚀 Ajuda para Formar Retiro</h3>
+        <p class="tool-desc">Selecione uma pasta para ver casais sugeridos (que nunca serviram nela):</p>
+        <select id="sugestao-pasta" class="form-control">
+          <option value="">Selecione uma pasta...</option>
+        </select>
+        <button id="btn-ajuda-retiro" class="btn btn-accent btn-block">Sugerir Casais</button>
+      </div>
+
+      <div class="tool-card">
+        <h3>Buscar</h3>
+        <input type="text" id="busca-nome" placeholder="Nome do casal..." />
+        <button id="btn-buscar" class="btn btn-secondary btn-block">Filtrar</button>
+        <button id="btn-limpar-busca" class="btn btn-outline btn-block">Limpar</button>
+      </div>
+
+      <div class="tool-card">
+        <h3>Filtro por Pastas</h3>
+        <div id="filtro-pastas" class="checkbox-grid">
+          </div>
+        <button id="btn-aplicar-pastas" class="btn btn-secondary btn-block">Aplicar Filtro</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="tabela-dirigente">
+        <thead>
+          <tr>
+            <th>Esposo/Esposa</th>
+            <th>Telefones</th>
+            <th>Ano Retiro</th>
+            <th>Pastas</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-dirigente"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
