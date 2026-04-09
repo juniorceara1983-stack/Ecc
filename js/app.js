@@ -25,9 +25,9 @@ const PASTAS = [
   'Coordenação Geral',
 ];
 
-const STORAGE_KEY     = 'ecc_casais';
-const SENHA_KEY       = 'ecc_dir_senha';
-const SENHA_PADRAO    = 'ecc2024';
+const STORAGE_KEY  = 'ecc_casais';
+const SENHA_KEY    = 'ecc_dir_senha';
+const SENHA_PADRAO = 'ecc2024';
 
 /* ===================================================
    STATE
@@ -44,7 +44,7 @@ function salvar() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(casais));
   } catch (err) {
-    console.error("Erro ao salvar no localStorage", err);
+    console.error('Erro ao salvar no localStorage', err);
   }
 }
 
@@ -66,69 +66,10 @@ function setSenha(nova) {
 }
 
 /* ===================================================
-   DOM REFERENCES
+   DOM HELPERS
    =================================================== */
 
-const $   = (id) => document.getElementById(id);
-
-// Login overlays
-const overlayEccLogin  = $('overlay-ecc-login');
-const formEccLogin     = $('form-ecc-login');
-const eccLoginNome     = $('ecc-login-nome');
-const eccWelcomeMsg    = $('ecc-welcome-msg');
-const eccNomeLogado    = $('ecc-nome-logado');
-
-const overlayDirLogin  = $('overlay-dir-login');
-const formDirLogin     = $('form-dir-login');
-const dirLoginSenha    = $('dir-login-senha');
-const dirLoginErro     = $('dir-login-erro');
-const btnVoltarEcc     = $('btn-voltar-ecc');
-
-// Tabs
-const tabBtns   = document.querySelectorAll('.tab-btn');
-const tabPanels = document.querySelectorAll('.tab-panel');
-
-// ECC Panel
-const tbodyEcc      = $('tbody-casais');
-const msgVazioEcc   = $('msg-vazio');
-const btnNovoCasal  = $('btn-novo-casal');
-const btnOracoes    = $('btn-oracoes');
-
-// Dirigente Panel
-const tbodyDir          = $('tbody-dirigente');
-const msgVazioDir       = $('msg-vazio-dir');
-const btnAddCasalDir    = $('btn-add-casal-dir');
-const buscarNomeInput  = $('busca-nome');
-const buscarAnoInput   = $('busca-ano');
-const btnBuscar        = $('btn-buscar');
-const btnLimparBusca   = $('btn-limpar-busca');
-const btnFiltrarPerfil = $('btn-filtrar-perfil');
-const btnLimparPerfil  = $('btn-limpar-perfil');
-const btnAplicarPastas = $('btn-aplicar-pastas');
-const labelFiltroAtivo = $('label-filtro-ativo');
-const btnLogoutDir     = $('btn-logout-dir');
-const formMudarSenha   = $('form-mudar-senha');
-const senhaAtualInput  = $('senha-atual');
-const senhaNoveInput   = $('senha-nova');
-const mudarSenhaMsg    = $('mudar-senha-msg');
-
-// Modal cadastro
-const modalCadastro  = $('modal-cadastro');
-const btnFecharModal = $('btn-fechar-modal');
-const btnCancelar    = $('btn-cancelar');
-const btnSalvar      = $('btn-salvar');
-const formCasal      = $('form-casal');
-
-// Modal visualização
-const modalVisualizar = $('modal-visualizar');
-const btnFecharView   = $('btn-fechar-view');
-const btnFecharView2  = $('btn-fechar-view2');
-const viewBody        = $('view-body');
-
-// Modal orações
-const modalOracoes      = $('modal-oracoes');
-const btnFecharOracoes  = $('btn-fechar-oracoes');
-const btnFecharOracoes2 = $('btn-fechar-oracoes2');
+const $ = (id) => document.getElementById(id);
 
 /* ===================================================
    SESSION AUTH HELPERS
@@ -155,8 +96,14 @@ function logoutDir() {
 }
 
 /* ===================================================
-   ECC LOGIN
+   ECC LOGIN  (index.html only)
    =================================================== */
+
+const overlayEccLogin = $('overlay-ecc-login');
+const formEccLogin    = $('form-ecc-login');
+const eccLoginNome    = $('ecc-login-nome');
+const eccWelcomeMsg   = $('ecc-welcome-msg');
+const eccNomeLogado   = $('ecc-nome-logado');
 
 function mostrarEccLogin() {
   if (overlayEccLogin) {
@@ -172,125 +119,124 @@ function ocultarEccLogin() {
   }
 }
 
-formEccLogin.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const nome = eccLoginNome.value.trim();
-  if (!nome) return;
+if (formEccLogin) {
+  formEccLogin.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nome = eccLoginNome.value.trim();
+    if (!nome) return;
 
-  eccWelcomeMsg.textContent = `Bem-vindo(a), ${nome}! Que Deus abençoe o seu casal. ✝`;
-  eccWelcomeMsg.removeAttribute('hidden');
-  formEccLogin.hidden = true;
+    if (eccWelcomeMsg) {
+      eccWelcomeMsg.textContent = `Bem-vindo(a), ${nome}! Que Deus abençoe o seu casal. ✝`;
+      eccWelcomeMsg.removeAttribute('hidden');
+    }
+    formEccLogin.hidden = true;
 
-  setEccLogado(nome);
-  eccNomeLogado.textContent = `Olá, ${nome}!`;
+    setEccLogado(nome);
+    if (eccNomeLogado) eccNomeLogado.textContent = `Olá, ${nome}!`;
 
-  setTimeout(() => {
-    ocultarEccLogin();
-    eccWelcomeMsg.setAttribute('hidden', '');
-    formEccLogin.hidden = false;
-  }, 2200);
-});
+    setTimeout(() => {
+      ocultarEccLogin();
+      if (eccWelcomeMsg) eccWelcomeMsg.setAttribute('hidden', '');
+      formEccLogin.hidden = false;
+    }, 2200);
+  });
+}
 
 /* ===================================================
-   DIRIGENTE LOGIN
+   DIRIGENTE LOGIN  (admin.html only)
    =================================================== */
 
+const overlayDirLogin = $('overlay-dir-login');
+const formDirLogin    = $('form-dir-login');
+const dirLoginSenha   = $('dir-login-senha');
+const dirLoginErro    = $('dir-login-erro');
+const btnVoltarEcc    = $('btn-voltar-ecc');
+const btnLogoutDir    = $('btn-logout-dir');
+const tabDirigente    = $('tab-dirigente');
+
 function mostrarDirLogin() {
-  overlayDirLogin.removeAttribute('hidden');
-  document.body.style.overflow = 'hidden';
-  dirLoginErro.setAttribute('hidden', '');
-  dirLoginSenha.value = '';
-  dirLoginSenha.focus();
+  if (overlayDirLogin) {
+    overlayDirLogin.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    if (dirLoginErro) dirLoginErro.setAttribute('hidden', '');
+    if (dirLoginSenha) { dirLoginSenha.value = ''; dirLoginSenha.focus(); }
+  }
 }
 
 function ocultarDirLogin() {
-  overlayDirLogin.setAttribute('hidden', '');
-  document.body.style.overflow = '';
+  if (overlayDirLogin) {
+    overlayDirLogin.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+  }
 }
 
-formDirLogin.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const senha = dirLoginSenha.value;
-  if (senha === getSenha()) {
-    setDirLogado();
-    ocultarDirLogin();
-    ativarTab('dirigente');
-  } else {
-    dirLoginErro.removeAttribute('hidden');
-    dirLoginSenha.value = '';
-    dirLoginSenha.focus();
+function mostrarPainelDirigente() {
+  if (tabDirigente) {
+    tabDirigente.removeAttribute('hidden');
   }
-});
-
-btnVoltarEcc.addEventListener('click', () => {
-  ocultarDirLogin();
-  ativarTab('ecc');
-});
-
-btnLogoutDir.addEventListener('click', () => {
-  logoutDir();
-  ativarTab('ecc');
-});
-
-/* ===================================================
-   MUDAR SENHA
-   =================================================== */
-
-formMudarSenha.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const atual = senhaAtualInput.value;
-  const nova  = senhaNoveInput.value.trim();
-
-  mudarSenhaMsg.className = 'mudar-senha-msg';
-  mudarSenhaMsg.removeAttribute('hidden');
-
-  if (atual !== getSenha()) {
-    mudarSenhaMsg.textContent = 'Senha atual incorreta.';
-    mudarSenhaMsg.classList.add('msg-erro');
-    return;
-  }
-  if (!nova || nova.length < 8) {
-    mudarSenhaMsg.textContent = 'A nova senha deve ter pelo menos 8 caracteres.';
-    mudarSenhaMsg.classList.add('msg-erro');
-    return;
-  }
-
-  setSenha(nova);
-  mudarSenhaMsg.textContent = 'Senha alterada com sucesso!';
-  mudarSenhaMsg.classList.add('msg-ok');
-  senhaAtualInput.value = '';
-  senhaNoveInput.value  = '';
-
-  setTimeout(() => {
-    mudarSenhaMsg.setAttribute('hidden', '');
-  }, 3000);
-});
-
-/* ===================================================
-   TABS
-   =================================================== */
-
-function ativarTab(tabId) {
-  tabBtns.forEach((b) => b.classList.remove('active'));
-  tabPanels.forEach((p) => p.classList.remove('active'));
-  
-  const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
-  if (btn) btn.classList.add('active');
-  
-  const panel = $(`tab-${tabId}`);
-  if (panel) panel.classList.add('active');
 }
 
-tabBtns.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const tab = btn.dataset.tab;
-    if (tab === 'dirigente' && !isDirLogado()) {
-      mostrarDirLogin();
+if (formDirLogin) {
+  formDirLogin.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const senha = dirLoginSenha ? dirLoginSenha.value : '';
+    if (senha === getSenha()) {
+      setDirLogado();
+      ocultarDirLogin();
+      mostrarPainelDirigente();
+    } else {
+      if (dirLoginErro) dirLoginErro.removeAttribute('hidden');
+      if (dirLoginSenha) { dirLoginSenha.value = ''; dirLoginSenha.focus(); }
+    }
+  });
+}
+
+if (btnLogoutDir) {
+  btnLogoutDir.addEventListener('click', () => {
+    logoutDir();
+    window.location.href = 'index.html';
+  });
+}
+
+/* ===================================================
+   MUDAR SENHA  (admin.html only)
+   =================================================== */
+
+const formMudarSenha  = $('form-mudar-senha');
+const senhaAtualInput = $('senha-atual');
+const senhaNoveInput  = $('senha-nova');
+const mudarSenhaMsg   = $('mudar-senha-msg');
+
+if (formMudarSenha) {
+  formMudarSenha.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const atual = senhaAtualInput ? senhaAtualInput.value : '';
+    const nova  = senhaNoveInput  ? senhaNoveInput.value.trim() : '';
+
+    if (mudarSenhaMsg) {
+      mudarSenhaMsg.className = 'mudar-senha-msg';
+      mudarSenhaMsg.removeAttribute('hidden');
+    }
+
+    if (atual !== getSenha()) {
+      if (mudarSenhaMsg) { mudarSenhaMsg.textContent = 'Senha atual incorreta.'; mudarSenhaMsg.classList.add('msg-erro'); }
       return;
     }
-    ativarTab(tab);
+    if (!nova || nova.length < 8) {
+      if (mudarSenhaMsg) { mudarSenhaMsg.textContent = 'A nova senha deve ter pelo menos 8 caracteres.'; mudarSenhaMsg.classList.add('msg-erro'); }
+      return;
+    }
+
+    setSenha(nova);
+    if (mudarSenhaMsg) { mudarSenhaMsg.textContent = 'Senha alterada com sucesso!'; mudarSenhaMsg.classList.add('msg-ok'); }
+    if (senhaAtualInput) senhaAtualInput.value = '';
+    if (senhaNoveInput)  senhaNoveInput.value  = '';
+
+    setTimeout(() => {
+      if (mudarSenhaMsg) mudarSenhaMsg.setAttribute('hidden', '');
+    }, 3000);
   });
-});
+}
 
 /* ===================================================
    POPULATE CHECKBOX GROUPS
@@ -301,7 +247,7 @@ function buildCheckboxGroup(containerId, pastas, prefix, singleSelect = false) {
   if (!el) return;
   el.innerHTML = '';
   pastas.forEach((pasta) => {
-    const id = `${prefix}-${pasta.replace(/\s+/g, '-').toLowerCase()}`;
+    const id    = `${prefix}-${pasta.replace(/\s+/g, '-').toLowerCase()}`;
     const label = document.createElement('label');
     const input = document.createElement('input');
     input.type  = singleSelect ? 'radio' : 'checkbox';
@@ -315,22 +261,39 @@ function buildCheckboxGroup(containerId, pastas, prefix, singleSelect = false) {
   });
 }
 
-// Build static groups
+// Build pasta filter checkboxes (admin.html)
 buildCheckboxGroup('filtro-pastas', PASTAS, 'fpasta');
+
+// Populate sugestao-pasta select (admin.html)
+const sugestaoPastaSelect = $('sugestao-pasta');
+if (sugestaoPastaSelect) {
+  PASTAS.forEach((pasta) => {
+    const opt = document.createElement('option');
+    opt.value = pasta;
+    opt.textContent = pasta;
+    sugestaoPastaSelect.appendChild(opt);
+  });
+}
 
 /* ===================================================
    MODAL HELPERS
    =================================================== */
 
 function abrirModal(modal) {
+  if (!modal) return;
   modal.removeAttribute('hidden');
   document.body.style.overflow = 'hidden';
 }
 
 function fecharModal(modal) {
+  if (!modal) return;
   modal.setAttribute('hidden', '');
   document.body.style.overflow = '';
 }
+
+const modalCadastro  = $('modal-cadastro');
+const modalVisualizar = $('modal-visualizar');
+const modalOracoes   = $('modal-oracoes');
 
 [modalCadastro, modalVisualizar, modalOracoes].forEach((m) => {
   if (m) {
@@ -340,19 +303,27 @@ function fecharModal(modal) {
   }
 });
 
-btnFecharModal.addEventListener('click', () => fecharModal(modalCadastro));
-btnCancelar.addEventListener('click', () => fecharModal(modalCadastro));
-btnFecharView.addEventListener('click', () => fecharModal(modalVisualizar));
-btnFecharView2.addEventListener('click', () => fecharModal(modalVisualizar));
-btnFecharOracoes.addEventListener('click', () => fecharModal(modalOracoes));
-btnFecharOracoes2.addEventListener('click', () => fecharModal(modalOracoes));
-btnOracoes.addEventListener('click', () => abrirModal(modalOracoes));
+const btnFecharModal  = $('btn-fechar-modal');
+const btnCancelar     = $('btn-cancelar');
+const btnFecharView   = $('btn-fechar-view');
+const btnFecharView2  = $('btn-fechar-view2');
+const btnFecharOracoes  = $('btn-fechar-oracoes');
+const btnFecharOracoes2 = $('btn-fechar-oracoes2');
+const btnOracoes      = $('btn-oracoes');
+
+if (btnFecharModal)    btnFecharModal.addEventListener('click', () => fecharModal(modalCadastro));
+if (btnCancelar)       btnCancelar.addEventListener('click',    () => fecharModal(modalCadastro));
+if (btnFecharView)     btnFecharView.addEventListener('click',  () => fecharModal(modalVisualizar));
+if (btnFecharView2)    btnFecharView2.addEventListener('click', () => fecharModal(modalVisualizar));
+if (btnFecharOracoes)  btnFecharOracoes.addEventListener('click',  () => fecharModal(modalOracoes));
+if (btnFecharOracoes2) btnFecharOracoes2.addEventListener('click', () => fecharModal(modalOracoes));
+if (btnOracoes)        btnOracoes.addEventListener('click', () => abrirModal(modalOracoes));
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (!modalCadastro.hidden)   fecharModal(modalCadastro);
-    if (!modalVisualizar.hidden) fecharModal(modalVisualizar);
-    if (!modalOracoes.hidden)    fecharModal(modalOracoes);
+    if (modalCadastro   && !modalCadastro.hidden)   fecharModal(modalCadastro);
+    if (modalVisualizar && !modalVisualizar.hidden)  fecharModal(modalVisualizar);
+    if (modalOracoes    && !modalOracoes.hidden)     fecharModal(modalOracoes);
   }
 });
 
@@ -362,7 +333,7 @@ document.addEventListener('keydown', (e) => {
 
 function lerFoto(inputEl, previewEl) {
   return new Promise((resolve) => {
-    const file = inputEl.files && inputEl.files[0];
+    const file = inputEl && inputEl.files && inputEl.files[0];
     if (!file) { resolve(null); return; }
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -376,10 +347,11 @@ function lerFoto(inputEl, previewEl) {
 }
 
 function mostrarPreview(previewEl, dataUrl) {
+  if (!previewEl) return;
   previewEl.innerHTML = '';
   if (!dataUrl) return;
   const img = document.createElement('img');
-  img.className = 'foto-avatar';
+  img.className = 'foto-avatar foto-avatar-lg';
   img.alt = 'Foto';
   img.setAttribute('src', dataUrl);
   previewEl.appendChild(img);
@@ -393,26 +365,32 @@ function configurarSecoesCond() {
   document.querySelectorAll('input[name="serviu"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       const jaServiu = radio.value === 'sim';
-      $('secao-ja-serviu').hidden   = !jaServiu;
-      $('secao-nunca-serviu').hidden = jaServiu;
+      const secJaServiu    = $('secao-ja-serviu');
+      const secNuncaServiu = $('secao-nunca-serviu');
+      if (secJaServiu)    secJaServiu.hidden    = !jaServiu;
+      if (secNuncaServiu) secNuncaServiu.hidden = jaServiu;
       if (!jaServiu) {
-        document.querySelectorAll('input[name="foi-coord"]').forEach((r) => r.checked = false);
-        document.querySelectorAll('input[name="foi-dirigente"]').forEach((r) => r.checked = false);
-        $('secao-coord').hidden     = true;
-        $('secao-dirigente').hidden = true;
+        document.querySelectorAll('input[name="foi-coord"]').forEach((r) => { r.checked = false; });
+        document.querySelectorAll('input[name="foi-dirigente"]').forEach((r) => { r.checked = false; });
+        const secCoord = $('secao-coord');
+        const secDir   = $('secao-dirigente');
+        if (secCoord) secCoord.hidden     = true;
+        if (secDir)   secDir.hidden       = true;
       }
     });
   });
 
   document.querySelectorAll('input[name="foi-coord"]').forEach((radio) => {
     radio.addEventListener('change', () => {
-      $('secao-coord').hidden = radio.value !== 'sim';
+      const secCoord = $('secao-coord');
+      if (secCoord) secCoord.hidden = radio.value !== 'sim';
     });
   });
 
   document.querySelectorAll('input[name="foi-dirigente"]').forEach((radio) => {
     radio.addEventListener('change', () => {
-      $('secao-dirigente').hidden = radio.value !== 'sim';
+      const secDir = $('secao-dirigente');
+      if (secDir) secDir.hidden = radio.value !== 'sim';
     });
   });
 }
@@ -422,15 +400,24 @@ function configurarSecoesCond() {
    =================================================== */
 
 function resetForm() {
-  formCasal.reset();
-  $('casal-id').value = '';
-  $('secao-ja-serviu').hidden    = true;
-  $('secao-nunca-serviu').hidden = true;
-  $('secao-coord').hidden        = true;
-  $('secao-dirigente').hidden    = true;
+  const formCasal = $('form-casal');
+  if (formCasal) formCasal.reset();
+  const casalId = $('casal-id');
+  if (casalId) casalId.value = '';
 
-  $('preview-esposo').innerHTML = '';
-  $('preview-esposa').innerHTML = '';
+  const secJaServiu    = $('secao-ja-serviu');
+  const secNuncaServiu = $('secao-nunca-serviu');
+  const secCoord       = $('secao-coord');
+  const secDir         = $('secao-dirigente');
+  if (secJaServiu)    secJaServiu.hidden    = true;
+  if (secNuncaServiu) secNuncaServiu.hidden = true;
+  if (secCoord)       secCoord.hidden       = true;
+  if (secDir)         secDir.hidden         = true;
+
+  const prevEsposo = $('preview-esposo');
+  const prevEsposa = $('preview-esposa');
+  if (prevEsposo) prevEsposo.innerHTML = '';
+  if (prevEsposa) prevEsposa.innerHTML = '';
 
   buildCheckboxGroup('pastas-servidas',    PASTAS, 'pserv');
   buildCheckboxGroup('pastas-coordenadas', PASTAS, 'pcoord');
@@ -438,30 +425,31 @@ function resetForm() {
   buildCheckboxGroup('pastas-gostaria',    PASTAS, 'pgost');
 
   configurarSecoesCond();
-  $('modal-titulo').textContent = 'Cadastro de Casal';
+  const tituloEl = $('modal-titulo');
+  if (tituloEl) tituloEl.textContent = 'Cadastro de Casal';
 }
 
 function popularForm(casal) {
-  $('modal-titulo').textContent = 'Editar Casal';
-  $('casal-id').value = casal.id;
+  const tituloEl = $('modal-titulo');
+  if (tituloEl) tituloEl.textContent = 'Editar Casal';
+  const casalId = $('casal-id');
+  if (casalId) casalId.value = casal.id;
 
-  $('campo-nome-esposo').value = casal.nomeEsposo || '';
-  $('campo-nome-esposa').value = casal.nomeEsposa || '';
-  $('campo-tel-esposo').value = casal.telEsposo || '';
-  $('campo-tel-esposa').value = casal.telEsposa || '';
-  $('campo-endereco').value   = casal.endereco  || '';
-  $('campo-ano-retiro').value = casal.anoRetiro || '';
+  const setVal = (id, val) => { const el = $(id); if (el) el.value = val || ''; };
+  setVal('campo-nome-esposo', casal.nomeEsposo);
+  setVal('campo-nome-esposa', casal.nomeEsposa);
+  setVal('campo-tel-esposo',  casal.telEsposo);
+  setVal('campo-tel-esposa',  casal.telEsposa);
+  setVal('campo-endereco',    casal.endereco);
+  setVal('campo-ano-retiro',  casal.anoRetiro);
 
   if (casal.fotoEsposo) mostrarPreview($('preview-esposo'), casal.fotoEsposo);
   if (casal.fotoEsposa) mostrarPreview($('preview-esposa'), casal.fotoEsposa);
 
   if (casal.jaServiu !== null && casal.jaServiu !== undefined) {
-    const val = casal.jaServiu ? 'sim' : 'nao';
+    const val   = casal.jaServiu ? 'sim' : 'nao';
     const radio = document.querySelector(`input[name="serviu"][value="${val}"]`);
-    if (radio) {
-      radio.checked = true;
-      radio.dispatchEvent(new Event('change'));
-    }
+    if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
   }
 
   if (casal.jaServiu) {
@@ -471,7 +459,7 @@ function popularForm(casal) {
     });
 
     if (casal.jaFoiCoordenador !== null && casal.jaFoiCoordenador !== undefined) {
-      const val = casal.jaFoiCoordenador ? 'sim' : 'nao';
+      const val   = casal.jaFoiCoordenador ? 'sim' : 'nao';
       const radio = document.querySelector(`input[name="foi-coord"][value="${val}"]`);
       if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
     }
@@ -483,17 +471,17 @@ function popularForm(casal) {
     }
 
     if (casal.jaFoiDirigente !== null && casal.jaFoiDirigente !== undefined) {
-      const val = casal.jaFoiDirigente ? 'sim' : 'nao';
+      const val   = casal.jaFoiDirigente ? 'sim' : 'nao';
       const radio = document.querySelector(`input[name="foi-dirigente"][value="${val}"]`);
       if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
     }
     if (casal.jaFoiDirigente) {
-      $('campo-ano-dirigente').value = casal.anoDirigente || '';
+      setVal('campo-ano-dirigente', casal.anoDirigente);
       const rb = document.querySelector(`#pasta-dirigente input[value="${casal.pastaDirigente}"]`);
       if (rb) rb.checked = true;
     }
 
-    $('campo-pastoral').value = casal.participaPastoral || '';
+    setVal('campo-pastoral', casal.participaPastoral);
   } else {
     (casal.gostariaDeServir || []).forEach((pasta) => {
       const cb = document.querySelector(`#pastas-gostaria input[value="${pasta}"]`);
@@ -507,14 +495,15 @@ function popularForm(casal) {
    =================================================== */
 
 async function coletarFormData() {
-  const nomeEsposo = $('campo-nome-esposo').value.trim();
-  const nomeEsposa = $('campo-nome-esposa').value.trim();
-  if (!nomeEsposo && !nomeEsposa) {
+  const nomeEsposo = ($('campo-nome-esposo') || {}).value || '';
+  const nomeEsposa = ($('campo-nome-esposa') || {}).value || '';
+  if (!nomeEsposo.trim() && !nomeEsposa.trim()) {
     alert('Por favor, informe pelo menos o nome de um dos cônjuges.');
     return null;
   }
 
-  const anoRetiro = parseInt($('campo-ano-retiro').value, 10);
+  const anoRetiroEl = $('campo-ano-retiro');
+  const anoRetiro   = anoRetiroEl ? parseInt(anoRetiroEl.value, 10) : NaN;
   if (isNaN(anoRetiro) || anoRetiro <= 0) {
     alert('Por favor, informe o ano do retiro.');
     return null;
@@ -526,8 +515,8 @@ async function coletarFormData() {
     return null;
   }
 
-  const jaServiu = serviuRadio.value === 'sim';
-  const existingId = $('casal-id').value;
+  const jaServiu   = serviuRadio.value === 'sim';
+  const existingId = ($('casal-id') || {}).value || '';
   const existing   = existingId ? casais.find((c) => c.id === existingId) : null;
 
   const fotoEsposo = await lerFoto($('foto-esposo'), $('preview-esposo'))
@@ -535,15 +524,17 @@ async function coletarFormData() {
   const fotoEsposa = await lerFoto($('foto-esposa'), $('preview-esposa'))
     || (existing && existing.fotoEsposa ? existing.fotoEsposa : null);
 
+  const getVal = (id) => { const el = $(id); return el ? el.value.trim() : ''; };
+
   const casal = {
-    id:           existingId || gerarId(),
-    nomeEsposo,
-    nomeEsposa,
-    nomes:        [nomeEsposo, nomeEsposa].filter(Boolean).join(' & '),
-    telEsposo:    $('campo-tel-esposo').value.trim(),
-    telEsposa:    $('campo-tel-esposa').value.trim(),
-    contato:      [$('campo-tel-esposo').value.trim(), $('campo-tel-esposa').value.trim()].filter(Boolean).join(' / '),
-    endereco:     $('campo-endereco').value.trim(),
+    id:        existingId || gerarId(),
+    nomeEsposo: nomeEsposo.trim(),
+    nomeEsposa: nomeEsposa.trim(),
+    nomes:     [nomeEsposo.trim(), nomeEsposa.trim()].filter(Boolean).join(' & '),
+    telEsposo: getVal('campo-tel-esposo'),
+    telEsposa: getVal('campo-tel-esposa'),
+    contato:   [getVal('campo-tel-esposo'), getVal('campo-tel-esposa')].filter(Boolean).join(' / '),
+    endereco:  getVal('campo-endereco'),
     anoRetiro,
     jaServiu,
     fotoEsposo,
@@ -554,16 +545,19 @@ async function coletarFormData() {
     casal.pastasServidas = Array.from(document.querySelectorAll('#pastas-servidas input:checked')).map((i) => i.value);
     const coordRadio = document.querySelector('input[name="foi-coord"]:checked');
     casal.jaFoiCoordenador = coordRadio ? coordRadio.value === 'sim' : false;
-    casal.pastasCoordenadasDe = casal.jaFoiCoordenador ? Array.from(document.querySelectorAll('#pastas-coordenadas input:checked')).map((i) => i.value) : [];
-    
-    const dirig = document.querySelector('input[name="foi-dirigente"]:checked');
-    casal.jaFoiDirigente = dirig ? dirig.value === 'sim' : false;
+    casal.pastasCoordenadasDe = casal.jaFoiCoordenador
+      ? Array.from(document.querySelectorAll('#pastas-coordenadas input:checked')).map((i) => i.value)
+      : [];
+
+    const dirigRadio = document.querySelector('input[name="foi-dirigente"]:checked');
+    casal.jaFoiDirigente = dirigRadio ? dirigRadio.value === 'sim' : false;
     if (casal.jaFoiDirigente) {
-      casal.anoDirigente   = parseInt($('campo-ano-dirigente').value, 10) || null;
+      const anoDir = $('campo-ano-dirigente');
+      casal.anoDirigente   = anoDir ? (parseInt(anoDir.value, 10) || null) : null;
       const pdRadio = document.querySelector('#pasta-dirigente input:checked');
       casal.pastaDirigente = pdRadio ? pdRadio.value : '';
     }
-    casal.participaPastoral = $('campo-pastoral').value.trim();
+    casal.participaPastoral = getVal('campo-pastoral');
   } else {
     casal.gostariaDeServir = Array.from(document.querySelectorAll('#pastas-gostaria input:checked')).map((i) => i.value);
   }
@@ -575,22 +569,26 @@ async function coletarFormData() {
    SAVE COUPLE
    =================================================== */
 
-btnSalvar.addEventListener('click', async () => {
-  const data = await coletarFormData();
-  if (!data) return;
+const btnSalvar = $('btn-salvar');
 
-  const idx = casais.findIndex((c) => c.id === data.id);
-  if (idx >= 0) {
-    casais[idx] = data;
-  } else {
-    casais.push(data);
-  }
+if (btnSalvar) {
+  btnSalvar.addEventListener('click', async () => {
+    const data = await coletarFormData();
+    if (!data) return;
 
-  salvar();
-  fecharModal(modalCadastro);
-  renderTabela();
-  renderTabelaDirigente(aplicarFiltrosAtivos());
-});
+    const idx = casais.findIndex((c) => c.id === data.id);
+    if (idx >= 0) {
+      casais[idx] = data;
+    } else {
+      casais.push(data);
+    }
+
+    salvar();
+    fecharModal(modalCadastro);
+    renderTabela();
+    renderTabelaDirigente(aplicarFiltrosAtivos());
+  });
+}
 
 /* ===================================================
    DISPLAY HELPERS
@@ -614,7 +612,9 @@ function avatarHtml(dataUrl, alt) {
 }
 
 function badgeSim(val) {
-  return val ? '<span class="badge badge-sim">Sim</span>' : '<span class="badge badge-nao">Não</span>';
+  return val
+    ? '<span class="badge badge-sim">Sim</span>'
+    : '<span class="badge badge-nao">Não</span>';
 }
 
 /* ===================================================
@@ -622,12 +622,16 @@ function badgeSim(val) {
    =================================================== */
 
 function renderTabela() {
+  const tbodyEcc    = $('tbody-casais');
+  const msgVazioEcc = $('msg-vazio');
+  if (!tbodyEcc) return;
+
   tbodyEcc.innerHTML = '';
   if (casais.length === 0) {
-    msgVazioEcc.classList.add('visivel');
+    if (msgVazioEcc) msgVazioEcc.classList.add('visivel');
     return;
   }
-  msgVazioEcc.classList.remove('visivel');
+  if (msgVazioEcc) msgVazioEcc.classList.remove('visivel');
 
   casais.forEach((c) => {
     const tr = document.createElement('tr');
@@ -649,12 +653,16 @@ function renderTabela() {
 }
 
 function renderTabelaDirigente(lista) {
+  const tbodyDir    = $('tbody-dirigente');
+  const msgVazioDir = $('msg-vazio-dir');
+  if (!tbodyDir) return;
+
   tbodyDir.innerHTML = '';
   if (!lista || lista.length === 0) {
-    msgVazioDir.classList.add('visivel');
+    if (msgVazioDir) msgVazioDir.classList.add('visivel');
     return;
   }
-  msgVazioDir.classList.remove('visivel');
+  if (msgVazioDir) msgVazioDir.classList.remove('visivel');
 
   lista.forEach((c) => {
     const pastas = (c.pastasServidas || []).join(', ') || '—';
@@ -699,27 +707,45 @@ function handleRowAction(e) {
   }
 }
 
-tbodyEcc.addEventListener('click', handleRowAction);
-tbodyDir.addEventListener('click', handleRowAction);
+const tbodyEccEl = $('tbody-casais');
+const tbodyDirEl = $('tbody-dirigente');
+if (tbodyEccEl) tbodyEccEl.addEventListener('click', handleRowAction);
+if (tbodyDirEl) tbodyDirEl.addEventListener('click', handleRowAction);
 
 function abrirNovoCadastro() { resetForm(); abrirModal(modalCadastro); }
-btnNovoCasal.addEventListener('click', abrirNovoCadastro);
-btnAddCasalDir.addEventListener('click', abrirNovoCadastro);
+
+const btnNovoCasal   = $('btn-novo-casal');
+const btnAddCasalDir = $('btn-add-casal-dir');
+if (btnNovoCasal)   btnNovoCasal.addEventListener('click', abrirNovoCadastro);
+if (btnAddCasalDir) btnAddCasalDir.addEventListener('click', abrirNovoCadastro);
+
+function abrirEdicao(casal) {
+  resetForm();
+  popularForm(casal);
+  abrirModal(modalCadastro);
+}
 
 /* ===================================================
    VISUALIZAÇÃO DETALHADA
    =================================================== */
 
 function abrirVisualizacao(c) {
-  const sim = (v) => v ? 'Sim' : 'Não';
+  const viewBody = $('view-body');
+  if (!viewBody) return;
+
+  const sim = (v) => (v ? 'Sim' : 'Não');
   const fotosHtml = `
     <div class="view-fotos">
       <div class="view-foto-item">
-        ${c.fotoEsposo ? `<img src="${c.fotoEsposo}" class="foto-avatar foto-avatar-lg" />` : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
+        ${c.fotoEsposo
+          ? `<img src="${c.fotoEsposo}" class="foto-avatar foto-avatar-lg" alt="${esc(getEsposo(c))}" />`
+          : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
         <p class="view-foto-label">Esposo</p>
       </div>
       <div class="view-foto-item">
-        ${c.fotoEsposa ? `<img src="${c.fotoEsposa}" class="foto-avatar foto-avatar-lg" />` : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
+        ${c.fotoEsposa
+          ? `<img src="${c.fotoEsposa}" class="foto-avatar foto-avatar-lg" alt="${esc(getEsposa(c))}" />`
+          : '<span class="avatar-placeholder avatar-placeholder-lg">👤</span>'}
         <p class="view-foto-label">Esposa</p>
       </div>
     </div>`;
@@ -741,9 +767,16 @@ function abrirVisualizacao(c) {
       <h4>Serviço no Retiro</h4>
       <div class="view-row"><span class="view-label">Pastas:</span><span class="view-val">${esc((c.pastasServidas || []).join(', ') || '—')}</span></div>
       <div class="view-row"><span class="view-label">Coordenador:</span><span class="view-val">${sim(c.jaFoiCoordenador)}</span></div>
-      ${c.jaFoiCoordenador ? `<div class="view-row"><span class="view-label">Pastas Coordenadas:</span><span class="view-val">${esc((c.pastasCoordenadasDe || []).join(', '))}</span></div>` : ''}
+      ${c.jaFoiCoordenador
+        ? `<div class="view-row"><span class="view-label">Pastas Coordenadas:</span><span class="view-val">${esc((c.pastasCoordenadasDe || []).join(', ') || '—')}</span></div>`
+        : ''}
       <div class="view-row"><span class="view-label">Dirigente:</span><span class="view-val">${sim(c.jaFoiDirigente)}</span></div>
-      ${c.jaFoiDirigente ? `<div class="view-row"><span class="view-label">Pasta Dirigente:</span><span class="view-val">${c.pastaDirigente} (${c.anoDirigente})</span></div>` : ''}
+      ${c.jaFoiDirigente
+        ? `<div class="view-row"><span class="view-label">Pasta Dirigente:</span><span class="view-val">${esc(c.pastaDirigente || '—')} (${c.anoDirigente || '—'})</span></div>`
+        : ''}
+      ${c.participaPastoral
+        ? `<div class="view-row"><span class="view-label">Pastoral:</span><span class="view-val">${esc(c.participaPastoral)}</span></div>`
+        : ''}
     </div>`;
   } else {
     html += `
@@ -758,57 +791,115 @@ function abrirVisualizacao(c) {
 }
 
 /* ===================================================
-   FILTERS
+   FILTERS  (admin.html)
    =================================================== */
 
 function aplicarFiltrosAtivos() { return filtroAtivo ? filtroAtivo(casais) : casais; }
 
-btnBuscar.addEventListener('click', () => {
-  const nome = buscarNomeInput.value.trim().toLowerCase();
-  const ano  = parseInt(buscarAnoInput.value, 10);
-  filtroAtivo = (lista) => lista.filter((c) => {
-    const nomesMatch = getNomesCasal(c).toLowerCase().includes(nome);
-    const anoMatch = !ano || c.anoRetiro === ano;
-    return nomesMatch && anoMatch;
+const buscarNomeInput   = $('busca-nome');
+const buscarAnoInput    = $('busca-ano');
+const btnBuscar         = $('btn-buscar');
+const btnLimparBusca    = $('btn-limpar-busca');
+const btnAplicarPastas  = $('btn-aplicar-pastas');
+const labelFiltroAtivo  = $('label-filtro-ativo');
+const btnAjudaRetiro    = $('btn-ajuda-retiro');
+
+if (btnBuscar) {
+  btnBuscar.addEventListener('click', () => {
+    const nome = buscarNomeInput ? buscarNomeInput.value.trim().toLowerCase() : '';
+    const ano  = buscarAnoInput  ? parseInt(buscarAnoInput.value, 10) : NaN;
+    filtroAtivo = (lista) => lista.filter((c) => {
+      const nomesMatch = getNomesCasal(c).toLowerCase().includes(nome);
+      const anoMatch   = !ano || c.anoRetiro === ano;
+      return nomesMatch && anoMatch;
+    });
+    if (labelFiltroAtivo) labelFiltroAtivo.textContent = '(Busca Ativa)';
+    renderTabelaDirigente(aplicarFiltrosAtivos());
   });
-  labelFiltroAtivo.textContent = '(Busca Ativa)';
-  renderTabelaDirigente(aplicarFiltrosAtivos());
-});
+}
 
-btnLimparBusca.addEventListener('click', () => {
-  buscarNomeInput.value = ''; buscarAnoInput.value = '';
-  filtroAtivo = null; labelFiltroAtivo.textContent = '';
-  renderTabelaDirigente(casais);
-});
+if (btnLimparBusca) {
+  btnLimparBusca.addEventListener('click', () => {
+    if (buscarNomeInput) buscarNomeInput.value = '';
+    if (buscarAnoInput)  buscarAnoInput.value  = '';
+    filtroAtivo = null;
+    if (labelFiltroAtivo) labelFiltroAtivo.textContent = '';
+    renderTabelaDirigente(casais);
+  });
+}
 
-btnAplicarPastas.addEventListener('click', () => {
-  const selecionadas = Array.from(document.querySelectorAll('#filtro-pastas input:checked')).map(i => i.value);
-  if (selecionadas.length === 0) { filtroAtivo = null; }
-  else {
-    filtroAtivo = (lista) => lista.filter(c => selecionadas.some(p => (c.pastasServidas || []).includes(p)));
-    labelFiltroAtivo.textContent = `(Pastas: ${selecionadas.join(', ')})`;
-  }
-  renderTabelaDirigente(aplicarFiltrosAtivos());
-});
+if (btnAplicarPastas) {
+  btnAplicarPastas.addEventListener('click', () => {
+    const selecionadas = Array.from(document.querySelectorAll('#filtro-pastas input:checked')).map((i) => i.value);
+    if (selecionadas.length === 0) {
+      filtroAtivo = null;
+      if (labelFiltroAtivo) labelFiltroAtivo.textContent = '';
+    } else {
+      filtroAtivo = (lista) => lista.filter((c) =>
+        selecionadas.some((p) => (c.pastasServidas || []).includes(p))
+      );
+      if (labelFiltroAtivo) labelFiltroAtivo.textContent = `(Pastas: ${selecionadas.join(', ')})`;
+    }
+    renderTabelaDirigente(aplicarFiltrosAtivos());
+  });
+}
+
+if (btnAjudaRetiro) {
+  btnAjudaRetiro.addEventListener('click', () => {
+    const pasta = sugestaoPastaSelect ? sugestaoPastaSelect.value : '';
+    if (!pasta) {
+      alert('Selecione uma pasta para obter sugestões.');
+      return;
+    }
+    filtroAtivo = (lista) => lista.filter((c) =>
+      !(c.pastasServidas || []).includes(pasta)
+    );
+    if (labelFiltroAtivo) labelFiltroAtivo.textContent = `(Sugestão para: ${pasta})`;
+    renderTabelaDirigente(aplicarFiltrosAtivos());
+  });
+}
 
 /* ===================================================
-   UTILITIES & INIT
+   UTILITIES
    =================================================== */
 
 function esc(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-function gerarId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function gerarId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+/* ===================================================
+   INIT
+   =================================================== */
 
 carregar();
-configurarSecoesCond();
-renderTabela();
-renderTabelaDirigente(casais);
 
-if (isEccLogado()) {
-  ocultarEccLogin();
-  eccNomeLogado.textContent = `Olá, ${sessionStorage.getItem('ecc_casal_nome')}!`;
-} else {
-  mostrarEccLogin();
+// index.html init
+if ($('tbody-casais')) {
+  renderTabela();
+
+  if (isEccLogado()) {
+    ocultarEccLogin();
+    if (eccNomeLogado) eccNomeLogado.textContent = `Olá, ${sessionStorage.getItem('ecc_casal_nome')}!`;
+  } else {
+    mostrarEccLogin();
+  }
+}
+
+// admin.html init
+if ($('tbody-dirigente')) {
+  renderTabelaDirigente(casais);
+
+  if (isDirLogado()) {
+    mostrarPainelDirigente();
+  } else {
+    mostrarDirLogin();
+  }
 }
