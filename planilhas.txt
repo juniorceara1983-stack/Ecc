@@ -1,0 +1,199 @@
+========================================================
+  ECC – Encontro de Casais com Cristo
+  Estrutura das Planilhas (Google Sheets) e Integração GS
+========================================================
+
+SHEET ID
+--------
+  Variável em code.gs : SHEET_ID
+  Como obter          : URL da planilha → .../spreadsheets/d/<SHEET_ID>/edit
+  Altere o valor de SHEET_ID em code.gs antes de implantar o script.
+
+
+========================================================
+  ABA 1 – Casais
+  Variável: ABA_CASAIS = 'Casais'
+========================================================
+
+Índice  | Nome da Coluna         | Campo JS (objeto casal)    | Observações
+--------+------------------------+----------------------------+-----------------------------
+  0     | ID                     | c.id                       | Gerado pelo app (timestamp)
+  1     | Esposo                 | c.nomeEsposo               |
+  2     | Esposa                 | c.nomeEsposa               |
+  3     | Tel. Esposo            | c.telEsposo                |
+  4     | Tel. Esposa            | c.telEsposa                |
+  5     | Endereço               | c.endereco                 |
+  6     | Ano Retiro             | c.anoRetiro                |
+  7     | Já Serviu              | c.jaServiu                 | Booleano → "Sim" / "Não"
+  8     | Equipes de Trabalho    | c.pastasServidas           | Array → separado por "; "
+  9     | Coordenador            | c.jaFoiCoordenador         | Booleano → "Sim" / "Não"
+ 10     | Equipes Coordenadas    | c.pastasCoordenadasDe      | Array → separado por "; "
+ 11     | Dirigente              | c.jaFoiDirigente           | Booleano → "Sim" / "Não"
+ 12     | Ano Dirigente          | c.anoDirigente             |
+ 13     | Pasta Dirigente        | c.pastaDirigente           |
+ 14     | Pastoral               | c.participaPastoral        |
+ 15     | Gostaria de Servir em  | c.gostariaDeServir         | Array → separado por "; "
+ 16     | Última Atualização     | (automático)               | new Date() no momento da sync
+
+Constantes de índice em code.gs:
+  COL_ID        = 0   (coluna 'ID')
+  COL_JA_SERVIU = 7   (coluna 'Já Serviu')
+  COL_EQUIPES   = 8   (coluna 'Equipes de Trabalho')
+
+Formatação do cabeçalho:
+  Fonte em negrito, fundo #1a5276 (azul escuro), texto #ffffff (branco).
+  Primeira linha congelada (setFrozenRows(1)).
+
+
+========================================================
+  ABA 2 – Sugestões Retiro
+  Variável: ABA_SUGESTOES = 'Sugestões Retiro'
+  Gerada pela função: gerarAbaSugestoes()  (menu ECC → "Gerar Sugestões de Retiro")
+========================================================
+
+Índice  | Nome da Coluna  | Fonte (aba Casais)
+--------+-----------------+--------------------
+  0     | Equipe          | nome da equipe iterada
+  1     | Esposo          | coluna 1 (Esposo)
+  2     | Esposa          | coluna 2 (Esposa)
+  3     | Tel. Esposo     | coluna 3 (Tel. Esposo)
+  4     | Tel. Esposa     | coluna 4 (Tel. Esposa)
+  5     | Ano Retiro      | coluna 6 (Ano Retiro)
+
+Filtro aplicado: casais que ainda NÃO serviram na equipe indicada.
+Formatação igual à aba Casais (negrito, #1a5276, branco, linha congelada).
+
+
+========================================================
+  EQUIPES DE TRABALHO (PASTAS)
+  Constante em app.js: PASTAS
+========================================================
+
+  1. Coordenador Geral
+  2. Sala
+  3. Visitação
+  4. Café e Mini Mercado
+  5. Compras
+  6. Cozinha
+  7. Ordem e Limpeza
+  8. Secretaria
+  9. Liturgia e Vigília
+ 10. Círculos
+
+
+========================================================
+  PASTAS DA EQUIPE DIRIGENTE
+  Constante em app.js: PASTAS_DIRIGENTE
+========================================================
+
+  1. Pós Encontro
+  2. Montagem
+  3. Fichas
+  4. Palestras
+  5. Finanças
+
+
+========================================================
+  INTEGRAÇÃO COM GOOGLE APPS SCRIPT (code.gs)
+========================================================
+
+Após implantar o script como "App da Web" no Google Apps Script,
+copie a URL gerada e cole em SCRIPT_URL dentro de js/app.js
+(campo de configuração do painel do dirigente).
+
+
+── doPost (escrita) ─────────────────────────────────────
+
+  URL   : <SCRIPT_URL>
+  Método: POST
+  Body  : JSON
+
+  Ações disponíveis:
+
+  1. Sincronizar casais
+     {
+       "acao"  : "sincronizar",
+       "casais": [ { ...objeto casal... }, ... ]
+     }
+     → Atualiza linhas existentes (match por ID) ou adiciona novas.
+
+  2. Excluir casal
+     {
+       "acao": "excluir",
+       "id"  : "<ID do casal>"
+     }
+     → Remove a linha cujo campo ID corresponde ao valor enviado.
+
+  Resposta de sucesso : { "ok": true }
+  Resposta de erro    : { "ok": false, "erro": "<mensagem>" }
+
+
+── doGet (leitura) ──────────────────────────────────────
+
+  URL   : <SCRIPT_URL>?acao=<acao>[&pasta=<nome>]
+  Método: GET
+
+  Ações disponíveis:
+
+  1. Exportar todos os casais
+     ?acao=exportar
+     Resposta: { "ok": true, "casais": [ { ...objeto casal... }, ... ] }
+
+  2. Gerar sugestões para uma equipe
+     ?acao=sugestoes&pasta=<nome_da_equipe>
+     Resposta: { "ok": true, "sugestoes": [ { esposo, esposa, telEsposo, telEsposa, anoRetiro }, ... ] }
+     Se 'pasta' for omitido, retorna casais que ainda não serviram em nenhuma equipe.
+
+  Resposta de erro: { "ok": false, "erro": "<mensagem>" }
+
+
+========================================================
+  ARMAZENAMENTO LOCAL (app.js)
+========================================================
+
+  Chave localStorage (lista de casais) : ecc_casais     (STORAGE_KEY)
+  Chave localStorage (senha dirigente) : ecc_dir_senha  (SENHA_KEY)
+  Senha padrão do dirigente            : ecc2024        (SENHA_PADRAO)
+  Chave sessionStorage (casal logado)  : ecc_casal_nome
+  Chave sessionStorage (dirigente)     : ecc_dir_auth   (valor '1' = autenticado)
+
+
+========================================================
+  OBJETO CASAL – CAMPOS COMPLETOS (app.js)
+========================================================
+
+  Campo                  | Tipo           | Descrição
+  -----------------------+----------------+------------------------------------
+  id                     | string         | Identificador único (timestamp)
+  nomeEsposo             | string         |
+  nomeEsposa             | string         |
+  telEsposo              | string         |
+  telEsposa              | string         |
+  endereco               | string         |
+  anoRetiro              | string/number  | Ano em que fez o retiro
+  jaServiu               | boolean        | Já serviu em alguma equipe
+  pastasServidas         | string[]       | Lista de equipes em que serviu
+  jaFoiCoordenador       | boolean        |
+  pastasCoordenadasDe    | string[]       | Equipes em que coordenou
+  jaFoiDirigente         | boolean        |
+  anoDirigente           | string/number  |
+  pastaDirigente         | string         | Pasta como dirigente
+  participaPastoral      | string         |
+  gostariaDeServir       | string[]       | Equipes de interesse futuro
+
+
+========================================================
+  ARQUIVOS DO PROJETO
+========================================================
+
+  Arquivo              | Descrição
+  ---------------------+--------------------------------------------
+  code.gs              | Google Apps Script – backend (Sheets API)
+  js/app.js            | Lógica do aplicativo web (localStorage + GS)
+  index.html           | Interface principal (casais / login ECC)
+  admin.html           | Painel do dirigente
+  css/style.css        | Estilos
+  manifest.json        | PWA manifest (index)
+  manifest-admin.json  | PWA manifest (admin)
+  sw.js                | Service Worker (cache offline)
+  planilhas.txt        | Este arquivo – referência da estrutura
