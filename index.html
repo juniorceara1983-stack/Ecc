@@ -4,12 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ECC – Encontro de Casais com Cristo</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+  <!-- ===== LOGIN OVERLAY ===== -->
+  <div id="overlay-ecc-login" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">✝</div>
+      <h2>Encontro de Casais com Cristo</h2>
+      <p class="login-subtitle">Bem-vindo(a)! Informe seu nome para continuar.</p>
+      <form id="form-ecc-login" class="login-form">
+        <label>Seu nome
+          <input type="text" id="ecc-login-nome" placeholder="Nome do casal..." required autocomplete="name" />
+        </label>
+        <p id="ecc-welcome-msg" class="login-welcome" hidden></p>
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      </form>
+    </div>
+  </div>
+
   <header class="app-header">
     <h1>ECC <span>Encontro de Casais com Cristo</span></h1>
-    <a href="admin.html" class="btn-admin-access">🔐</a>
+    <div class="header-right">
+      <span id="ecc-nome-logado" class="ecc-nome-logado"></span>
+      <a href="admin.html" class="btn-admin-access" title="Painel do Dirigente">🔐</a>
+    </div>
   </header>
 
   <main>
@@ -20,13 +40,190 @@
       </div>
 
       <div class="quick-access-grid">
-        <a href="https://cnbb.org.br/liturgia-diaria/" target="_blank" class="quick-card">📖 Liturgia</a>
-        <a href="https://www.vaticannews.va/pt/santo-do-dia.html" target="_blank" class="quick-card">✨ Santo do Dia</a>
+        <a href="https://cnbb.org.br/liturgia-diaria/" target="_blank" rel="noopener noreferrer" class="quick-card">📖 Liturgia</a>
+        <a href="https://www.vaticannews.va/pt/santo-do-dia.html" target="_blank" rel="noopener noreferrer" class="quick-card">✨ Santo do Dia</a>
         <button id="btn-oracoes" class="quick-card">🙏 Orações</button>
+      </div>
+
+      <div class="table-wrapper mt-2">
+        <table id="tabela-ecc">
+          <thead>
+            <tr>
+              <th>Fotos</th>
+              <th>Esposo</th>
+              <th>Esposa</th>
+              <th>Telefones</th>
+              <th>Ano Retiro</th>
+              <th>Já Serviu</th>
+              <th>Dirigente</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-casais"></tbody>
+        </table>
+        <div id="msg-vazio" class="msg-vazio">Nenhum casal cadastrado ainda.</div>
       </div>
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <!-- ===== MODAL: CADASTRO ===== -->
+  <div id="modal-cadastro" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-titulo">Cadastro de Casal</h3>
+        <button id="btn-fechar-modal" class="btn-close" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-casal" novalidate>
+          <input type="hidden" id="casal-id" />
+
+          <fieldset class="form-section">
+            <legend>Identificação</legend>
+            <div class="form-grid-2">
+              <label>Nome do Esposo
+                <input type="text" id="campo-nome-esposo" placeholder="Nome completo" />
+              </label>
+              <label>Nome da Esposa
+                <input type="text" id="campo-nome-esposa" placeholder="Nome completo" />
+              </label>
+              <label>Telefone do Esposo
+                <input type="tel" id="campo-tel-esposo" placeholder="(00) 00000-0000" />
+              </label>
+              <label>Telefone da Esposa
+                <input type="tel" id="campo-tel-esposa" placeholder="(00) 00000-0000" />
+              </label>
+            </div>
+            <label>Endereço
+              <input type="text" id="campo-endereco" placeholder="Rua, número, bairro..." />
+            </label>
+            <label>Ano do Retiro
+              <input type="number" id="campo-ano-retiro" placeholder="Ex: 2023" min="1980" max="2099" />
+            </label>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>Fotos</legend>
+            <div class="form-grid-2">
+              <label>Foto do Esposo
+                <input type="file" id="foto-esposo" accept="image/*" />
+                <div id="preview-esposo" class="foto-preview"></div>
+              </label>
+              <label>Foto da Esposa
+                <input type="file" id="foto-esposa" accept="image/*" />
+                <div id="preview-esposa" class="foto-preview"></div>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>Histórico de Serviço</legend>
+            <div class="radio-group">
+              <span class="radio-label">O casal já serviu no retiro?</span>
+              <label><input type="radio" name="serviu" value="sim" /> Sim</label>
+              <label><input type="radio" name="serviu" value="nao" /> Não</label>
+            </div>
+
+            <div id="secao-ja-serviu" hidden>
+              <div class="form-section-inner">
+                <p class="form-label">Pastas em que serviu:</p>
+                <div id="pastas-servidas" class="checkbox-grid"></div>
+              </div>
+
+              <div class="radio-group">
+                <span class="radio-label">Já foi Coordenador(a)?</span>
+                <label><input type="radio" name="foi-coord" value="sim" /> Sim</label>
+                <label><input type="radio" name="foi-coord" value="nao" /> Não</label>
+              </div>
+
+              <div id="secao-coord" hidden>
+                <div class="form-section-inner">
+                  <p class="form-label">Pastas que coordenou:</p>
+                  <div id="pastas-coordenadas" class="checkbox-grid"></div>
+                </div>
+              </div>
+
+              <div class="radio-group">
+                <span class="radio-label">Já foi Dirigente?</span>
+                <label><input type="radio" name="foi-dirigente" value="sim" /> Sim</label>
+                <label><input type="radio" name="foi-dirigente" value="nao" /> Não</label>
+              </div>
+
+              <div id="secao-dirigente" hidden>
+                <div class="form-section-inner">
+                  <label>Ano como Dirigente
+                    <input type="number" id="campo-ano-dirigente" placeholder="Ex: 2022" min="1980" max="2099" />
+                  </label>
+                  <p class="form-label">Pasta como Dirigente:</p>
+                  <div id="pasta-dirigente" class="checkbox-grid"></div>
+                </div>
+              </div>
+
+              <label>Participa de alguma Pastoral?
+                <input type="text" id="campo-pastoral" placeholder="Ex: Pastoral da Família" />
+              </label>
+            </div>
+
+            <div id="secao-nunca-serviu" hidden>
+              <div class="form-section-inner">
+                <p class="form-label">Gostaria de servir em:</p>
+                <div id="pastas-gostaria" class="checkbox-grid"></div>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancelar" class="btn btn-outline">Cancelar</button>
+        <button id="btn-salvar" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: VISUALIZAÇÃO ===== -->
+  <div id="modal-visualizar" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Detalhes do Casal</h3>
+        <button id="btn-fechar-view" class="btn-close" aria-label="Fechar">✕</button>
+      </div>
+      <div id="view-body" class="modal-body"></div>
+      <div class="modal-footer">
+        <button id="btn-fechar-view2" class="btn btn-outline">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: ORAÇÕES ===== -->
+  <div id="modal-oracoes" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🙏 Orações</h3>
+        <button id="btn-fechar-oracoes" class="btn-close" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body oracoes-body">
+        <div class="oracao-item">
+          <h4>Pai Nosso</h4>
+          <p>Pai nosso que estais no céu, santificado seja o vosso nome; venha a nós o vosso reino; seja feita a vossa vontade, assim na terra como no céu. O pão nosso de cada dia nos dai hoje; perdoai-nos as nossas ofensas, assim como nós perdoamos a quem nos tem ofendido; e não nos deixeis cair em tentação, mas livrai-nos do mal. Amém.</p>
+        </div>
+        <div class="oracao-item">
+          <h4>Ave Maria</h4>
+          <p>Ave Maria, cheia de graça, o Senhor é convosco; bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós pecadores, agora e na hora de nossa morte. Amém.</p>
+        </div>
+        <div class="oracao-item">
+          <h4>Glória ao Pai</h4>
+          <p>Glória ao Pai, e ao Filho, e ao Espírito Santo. Como era no princípio, agora e sempre, por todos os séculos dos séculos. Amém.</p>
+        </div>
+        <div class="oracao-item">
+          <h4>Oração do ECC</h4>
+          <p>Senhor Jesus Cristo, que tanto amaste a família, concedei a todos os casais do ECC a graça de se amarem com amor fiel e generoso, tornando seu lar um reflexo do amor de Deus. Que a Sagrada Família de Nazaré seja o modelo e intercessora de todos os lares. Amém.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-fechar-oracoes2" class="btn btn-outline">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
 </body>
 </html>

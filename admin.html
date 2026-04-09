@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ECC Admin – Painel do Dirigente</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="admin-body">
 
@@ -15,11 +15,11 @@
       <p class="login-subtitle">Acesso restrito</p>
       <form id="form-dir-login" class="login-form">
         <label>Senha
-          <input type="password" id="dir-login-senha" placeholder="••••••" required />
+          <input type="password" id="dir-login-senha" placeholder="••••••" required autocomplete="current-password" />
         </label>
         <p id="dir-login-erro" class="login-erro" hidden>Senha incorreta.</p>
         <button type="submit" class="btn btn-primary btn-block">Entrar</button>
-        <a href="index.html" class="btn btn-outline btn-block" style="text-decoration: none; text-align: center; display: block;">Voltar ao Início</a>
+        <a href="index.html" id="btn-voltar-ecc" class="btn btn-outline btn-block">Voltar ao Início</a>
       </form>
     </div>
   </div>
@@ -47,15 +47,16 @@
 
       <div class="tool-card">
         <h3>Buscar</h3>
-        <input type="text" id="busca-nome" placeholder="Nome do casal..." />
+        <input type="text" id="busca-nome" class="form-control" placeholder="Nome do casal..." />
+        <input type="number" id="busca-ano" class="form-control mt-half" placeholder="Ano do retiro..." min="1980" max="2099" />
+        <span id="label-filtro-ativo" class="label-filtro-ativo"></span>
         <button id="btn-buscar" class="btn btn-secondary btn-block">Filtrar</button>
         <button id="btn-limpar-busca" class="btn btn-outline btn-block">Limpar</button>
       </div>
 
       <div class="tool-card">
         <h3>Filtro por Pastas</h3>
-        <div id="filtro-pastas" class="checkbox-grid">
-          </div>
+        <div id="filtro-pastas" class="checkbox-grid"></div>
         <button id="btn-aplicar-pastas" class="btn btn-secondary btn-block">Aplicar Filtro</button>
       </div>
     </div>
@@ -64,18 +65,163 @@
       <table id="tabela-dirigente">
         <thead>
           <tr>
-            <th>Esposo/Esposa</th>
+            <th>Esposo</th>
+            <th>Esposa</th>
             <th>Telefones</th>
             <th>Ano Retiro</th>
             <th>Pastas</th>
+            <th>Coordenador</th>
+            <th>Dirigente</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody id="tbody-dirigente"></tbody>
       </table>
+      <div id="msg-vazio-dir" class="msg-vazio">Nenhum casal encontrado.</div>
+    </div>
+
+    <div class="tool-card mt-2 card-narrow">
+      <h3>🔑 Alterar Senha do Painel</h3>
+      <form id="form-mudar-senha">
+        <label>Senha Atual
+          <input type="password" id="senha-atual" class="form-control" placeholder="••••••" required autocomplete="current-password" />
+        </label>
+        <label class="mt-half">Nova Senha
+          <input type="password" id="senha-nova" class="form-control" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" />
+        </label>
+        <p id="mudar-senha-msg" class="mudar-senha-msg" hidden></p>
+        <button type="submit" class="btn btn-primary btn-block mt-1">Alterar Senha</button>
+      </form>
     </div>
   </main>
 
-  <script src="app.js"></script>
+  <!-- ===== MODAL: CADASTRO ===== -->
+  <div id="modal-cadastro" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-titulo">Cadastro de Casal</h3>
+        <button id="btn-fechar-modal" class="btn-close" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-casal" novalidate>
+          <input type="hidden" id="casal-id" />
+
+          <fieldset class="form-section">
+            <legend>Identificação</legend>
+            <div class="form-grid-2">
+              <label>Nome do Esposo
+                <input type="text" id="campo-nome-esposo" placeholder="Nome completo" />
+              </label>
+              <label>Nome da Esposa
+                <input type="text" id="campo-nome-esposa" placeholder="Nome completo" />
+              </label>
+              <label>Telefone do Esposo
+                <input type="tel" id="campo-tel-esposo" placeholder="(00) 00000-0000" />
+              </label>
+              <label>Telefone da Esposa
+                <input type="tel" id="campo-tel-esposa" placeholder="(00) 00000-0000" />
+              </label>
+            </div>
+            <label>Endereço
+              <input type="text" id="campo-endereco" placeholder="Rua, número, bairro..." />
+            </label>
+            <label>Ano do Retiro
+              <input type="number" id="campo-ano-retiro" placeholder="Ex: 2023" min="1980" max="2099" />
+            </label>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>Fotos</legend>
+            <div class="form-grid-2">
+              <label>Foto do Esposo
+                <input type="file" id="foto-esposo" accept="image/*" />
+                <div id="preview-esposo" class="foto-preview"></div>
+              </label>
+              <label>Foto da Esposa
+                <input type="file" id="foto-esposa" accept="image/*" />
+                <div id="preview-esposa" class="foto-preview"></div>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>Histórico de Serviço</legend>
+            <div class="radio-group">
+              <span class="radio-label">O casal já serviu no retiro?</span>
+              <label><input type="radio" name="serviu" value="sim" /> Sim</label>
+              <label><input type="radio" name="serviu" value="nao" /> Não</label>
+            </div>
+
+            <div id="secao-ja-serviu" hidden>
+              <div class="form-section-inner">
+                <p class="form-label">Pastas em que serviu:</p>
+                <div id="pastas-servidas" class="checkbox-grid"></div>
+              </div>
+
+              <div class="radio-group">
+                <span class="radio-label">Já foi Coordenador(a)?</span>
+                <label><input type="radio" name="foi-coord" value="sim" /> Sim</label>
+                <label><input type="radio" name="foi-coord" value="nao" /> Não</label>
+              </div>
+
+              <div id="secao-coord" hidden>
+                <div class="form-section-inner">
+                  <p class="form-label">Pastas que coordenou:</p>
+                  <div id="pastas-coordenadas" class="checkbox-grid"></div>
+                </div>
+              </div>
+
+              <div class="radio-group">
+                <span class="radio-label">Já foi Dirigente?</span>
+                <label><input type="radio" name="foi-dirigente" value="sim" /> Sim</label>
+                <label><input type="radio" name="foi-dirigente" value="nao" /> Não</label>
+              </div>
+
+              <div id="secao-dirigente" hidden>
+                <div class="form-section-inner">
+                  <label>Ano como Dirigente
+                    <input type="number" id="campo-ano-dirigente" placeholder="Ex: 2022" min="1980" max="2099" />
+                  </label>
+                  <p class="form-label">Pasta como Dirigente:</p>
+                  <div id="pasta-dirigente" class="checkbox-grid"></div>
+                </div>
+              </div>
+
+              <label>Participa de alguma Pastoral?
+                <input type="text" id="campo-pastoral" placeholder="Ex: Pastoral da Família" />
+              </label>
+            </div>
+
+            <div id="secao-nunca-serviu" hidden>
+              <div class="form-section-inner">
+                <p class="form-label">Gostaria de servir em:</p>
+                <div id="pastas-gostaria" class="checkbox-grid"></div>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancelar" class="btn btn-outline">Cancelar</button>
+        <button id="btn-salvar" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: VISUALIZAÇÃO ===== -->
+  <div id="modal-visualizar" class="modal-overlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Detalhes do Casal</h3>
+        <button id="btn-fechar-view" class="btn-close" aria-label="Fechar">✕</button>
+      </div>
+      <div id="view-body" class="modal-body"></div>
+      <div class="modal-footer">
+        <button id="btn-fechar-view2" class="btn btn-outline">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
 </body>
 </html>
