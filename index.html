@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ECC – Encontro de Casais com Cristo</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- ========== HEADER ========== -->
+  <header class="app-header">
+    <h1>ECC <span>Encontro de Casais com Cristo</span></h1>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="ecc">Painel ECC</button>
+      <button class="tab-btn" data-tab="dirigente">Painel do Dirigente</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ==================== PAINEL ECC ==================== -->
+    <section id="tab-ecc" class="tab-panel active">
+      <div class="panel-header">
+        <h2>Painel ECC</h2>
+        <button id="btn-novo-casal" class="btn btn-primary">
+          ＋ Cadastrar Casal
+        </button>
+      </div>
+
+      <!-- TABLE OF COUPLES -->
+      <div class="table-wrapper">
+        <table id="tabela-casais">
+          <thead>
+            <tr>
+              <th>Nomes</th>
+              <th>Contato</th>
+              <th>Ano do Retiro</th>
+              <th>Já Serviu</th>
+              <th>Já foi Dirigente</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-casais">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+        <p id="msg-vazio" class="msg-vazio">Nenhum casal cadastrado ainda.</p>
+      </div>
+    </section>
+
+    <!-- ==================== PAINEL DO DIRIGENTE ==================== -->
+    <section id="tab-dirigente" class="tab-panel">
+      <div class="panel-header">
+        <h2>Painel do Dirigente</h2>
+      </div>
+
+      <!-- FERRAMENTAS DO DIRIGENTE -->
+      <div class="dirigente-tools">
+        <!-- Selecionar Pastas -->
+        <div class="tool-card">
+          <h3>Pastas do Retiro</h3>
+          <p class="tool-desc">Selecione as pastas relacionadas ao serviço nos retiros:</p>
+          <div id="filtro-pastas" class="checkbox-group">
+            <!-- injected by JS -->
+          </div>
+          <button id="btn-aplicar-pastas" class="btn btn-secondary">Filtrar por Pasta</button>
+        </div>
+
+        <!-- Filtros de Busca -->
+        <div class="tool-card">
+          <h3>Buscar Casal</h3>
+          <label>Por nome:
+            <input type="text" id="busca-nome" placeholder="Digite o nome…" />
+          </label>
+          <label>Por ano do retiro:
+            <input type="number" id="busca-ano" placeholder="Ex: 2022" min="1970" max="2099" />
+          </label>
+          <button id="btn-buscar" class="btn btn-secondary">Buscar</button>
+          <button id="btn-limpar-busca" class="btn btn-outline">Limpar</button>
+        </div>
+
+        <!-- Filtros de Perfil -->
+        <div class="tool-card">
+          <h3>Filtrar por Perfil</h3>
+          <p class="tool-desc">Selecione apenas uma opção:</p>
+          <div class="radio-group" id="filtro-perfil">
+            <label><input type="radio" name="filtro-perfil" value="nunca-serviu" /> Nunca serviu no retiro</label>
+            <label><input type="radio" name="filtro-perfil" value="nunca-coordenador" /> Nunca foi coordenador</label>
+            <label><input type="radio" name="filtro-perfil" value="nunca-dirigente" /> Nunca foi dirigente</label>
+          </div>
+          <button id="btn-filtrar-perfil" class="btn btn-secondary">Filtrar</button>
+          <button id="btn-limpar-perfil" class="btn btn-outline">Limpar</button>
+        </div>
+      </div>
+
+      <!-- RESULTS TABLE -->
+      <div class="table-wrapper">
+        <h3>Casais <span id="label-filtro-ativo"></span></h3>
+        <div class="dirigente-actions">
+          <button id="btn-add-casal-dir" class="btn btn-primary">＋ Adicionar Casal</button>
+        </div>
+        <table id="tabela-dirigente">
+          <thead>
+            <tr>
+              <th>Nomes</th>
+              <th>Contato</th>
+              <th>Ano do Retiro</th>
+              <th>Pastas Servidas</th>
+              <th>Já Coordenou</th>
+              <th>Já foi Dirigente</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-dirigente">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+        <p id="msg-vazio-dir" class="msg-vazio">Nenhum casal encontrado.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== MODAL DE CADASTRO ==================== -->
+  <div id="modal-cadastro" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <div class="modal-header">
+        <h2 id="modal-titulo">Cadastro de Casal</h2>
+        <button class="btn-fechar" id="btn-fechar-modal" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-casal" novalidate>
+          <input type="hidden" id="casal-id" />
+
+          <!-- Identificação -->
+          <fieldset>
+            <legend>Identificação</legend>
+            <label>Nomes do casal <span class="obrig">*</span>
+              <input type="text" id="campo-nomes" placeholder="Nome do esposo e nome da esposa" required />
+            </label>
+            <label>Endereço
+              <input type="text" id="campo-endereco" placeholder="Rua, número, bairro, cidade" />
+            </label>
+            <label>Contato (telefone / e-mail)
+              <input type="text" id="campo-contato" placeholder="(00) 00000-0000 / email@exemplo.com" />
+            </label>
+            <label>Ano em que vivenciou o retiro <span class="obrig">*</span>
+              <input type="number" id="campo-ano-retiro" placeholder="Ex: 2022" min="1970" max="2099" required />
+            </label>
+          </fieldset>
+
+          <!-- Serviço no Retiro -->
+          <fieldset id="fs-serviu">
+            <legend>Serviço no Retiro</legend>
+            <div class="radio-group">
+              <label><input type="radio" name="serviu" value="sim" id="serviu-sim" /> Já serviu no retiro</label>
+              <label><input type="radio" name="serviu" value="nao" id="serviu-nao" /> Nunca serviu no retiro</label>
+            </div>
+
+            <!-- Se JÁ SERVIU -->
+            <div id="secao-ja-serviu" class="secao-condicional" hidden>
+              <p class="label-section">Pastas em que serviu (múltipla escolha):</p>
+              <div id="pastas-servidas" class="checkbox-group">
+                <!-- injected by JS -->
+              </div>
+
+              <p class="label-section">Já foi coordenador de alguma pasta?</p>
+              <div class="radio-group">
+                <label><input type="radio" name="foi-coord" value="sim" /> Sim</label>
+                <label><input type="radio" name="foi-coord" value="nao" /> Não</label>
+              </div>
+              <div id="secao-coord" class="secao-condicional" hidden>
+                <p class="label-section">Pastas que coordenou (múltipla escolha):</p>
+                <div id="pastas-coordenadas" class="checkbox-group">
+                  <!-- injected by JS -->
+                </div>
+              </div>
+
+              <p class="label-section">Já foi dirigente?</p>
+              <div class="radio-group">
+                <label><input type="radio" name="foi-dirigente" value="sim" /> Sim</label>
+                <label><input type="radio" name="foi-dirigente" value="nao" /> Não</label>
+              </div>
+              <div id="secao-dirigente" class="secao-condicional" hidden>
+                <label>Ano em que foi dirigente
+                  <input type="number" id="campo-ano-dirigente" placeholder="Ex: 2020" min="1970" max="2099" />
+                </label>
+                <p class="label-section">Pasta como dirigente:</p>
+                <div id="pasta-dirigente" class="checkbox-group checkbox-single">
+                  <!-- injected by JS -->
+                </div>
+              </div>
+
+              <label>Participa de alguma pastoral ou serviço na comunidade?
+                <textarea id="campo-pastoral" rows="2" placeholder="Descreva aqui…"></textarea>
+              </label>
+            </div>
+
+            <!-- Se NUNCA SERVIU -->
+            <div id="secao-nunca-serviu" class="secao-condicional" hidden>
+              <p class="label-section">Gostaria de servir ou ter a experiência de servir em (múltipla escolha):</p>
+              <div id="pastas-gostaria" class="checkbox-group">
+                <!-- injected by JS -->
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancelar" class="btn btn-outline">Cancelar</button>
+        <button type="button" id="btn-salvar" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL DE VISUALIZAÇÃO ==================== -->
+  <div id="modal-visualizar" class="modal-overlay" hidden>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="view-titulo">
+      <div class="modal-header">
+        <h2 id="view-titulo">Detalhes do Casal</h2>
+        <button class="btn-fechar" id="btn-fechar-view" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="modal-body" id="view-body">
+        <!-- injected by JS -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-fechar-view2" class="btn btn-outline">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
