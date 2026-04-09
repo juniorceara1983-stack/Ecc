@@ -295,7 +295,7 @@ function coletarFormData() {
   const nomes = $('campo-nomes').value.trim();
   if (!nomes) { alert('Por favor, informe os nomes do casal.'); return null; }
   const anoRetiro = parseInt($('campo-ano-retiro').value, 10);
-  if (!anoRetiro) { alert('Por favor, informe o ano do retiro.'); return null; }
+  if (isNaN(anoRetiro) || anoRetiro <= 0) { alert('Por favor, informe o ano do retiro.'); return null; }
 
   const serviuRadio = document.querySelector('input[name="serviu"]:checked');
   if (!serviuRadio) { alert('Por favor, indique se o casal já serviu no retiro.'); return null; }
