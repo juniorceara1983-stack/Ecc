@@ -247,8 +247,8 @@ formMudarSenha.addEventListener('submit', (e) => {
     mudarSenhaMsg.classList.add('msg-erro');
     return;
   }
-  if (!nova || nova.length < 4) {
-    mudarSenhaMsg.textContent = 'A nova senha deve ter pelo menos 4 caracteres.';
+  if (!nova || nova.length < 8) {
+    mudarSenhaMsg.textContent = 'A nova senha deve ter pelo menos 8 caracteres.';
     mudarSenhaMsg.classList.add('msg-erro');
     return;
   }
@@ -369,8 +369,13 @@ function lerFoto(inputEl, previewEl) {
 }
 
 function mostrarPreview(previewEl, dataUrl) {
-  if (!dataUrl) { previewEl.innerHTML = ''; return; }
-  previewEl.innerHTML = `<img src="${dataUrl}" class="foto-avatar" alt="Foto" />`;
+  previewEl.innerHTML = '';
+  if (!dataUrl) return;
+  const img = document.createElement('img');
+  img.className = 'foto-avatar';
+  img.alt = 'Foto';
+  img.setAttribute('src', dataUrl);
+  previewEl.appendChild(img);
 }
 
 /* ===================================================
@@ -527,9 +532,9 @@ async function coletarFormData() {
   const existing   = existingId ? casais.find((c) => c.id === existingId) : null;
 
   const fotoEsposo = await lerFoto($('foto-esposo'), $('preview-esposo'))
-    || (existing ? (existing.fotoEsposo || null) : null);
+    || (existing && existing.fotoEsposo ? existing.fotoEsposo : null);
   const fotoEsposa = await lerFoto($('foto-esposa'), $('preview-esposa'))
-    || (existing ? (existing.fotoEsposa || null) : null);
+    || (existing && existing.fotoEsposa ? existing.fotoEsposa : null);
 
   const casal = {
     id:          existingId || gerarId(),
