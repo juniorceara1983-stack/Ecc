@@ -1667,8 +1667,9 @@ function renderComunicadosAdmin() {
     const thumb = com.imagem
       ? `<img src="${com.imagem}" class="comunicado-admin-thumb" alt="Flyer" />`
       : `<div class="comunicado-admin-thumb" style="background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:1.8rem;border-radius:8px;">📢</div>`;
-    const dataFmt = com.dataEvento
+    const dataFmt = isValidDateStr(com.dataEvento)
       ? new Date(com.dataEvento + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+    const horaFmt = sanitizeTimeStr(com.horaEvento);
     return `
       <div class="comunicado-admin-item">
         ${thumb}
@@ -1676,7 +1677,7 @@ function renderComunicadosAdmin() {
           <div class="comunicado-admin-title">${esc(com.titulo)}</div>
           <div class="comunicado-admin-meta">
             ${dataFmt ? '📅 ' + dataFmt : ''}
-            ${com.horaEvento ? ' ⏰ ' + esc(com.horaEvento) : ''}
+            ${horaFmt ? ' ⏰ ' + esc(horaFmt) : ''}
             ${com.local ? ' 📍 ' + esc(com.local) : ''}
           </div>
           <div class="comunicado-admin-desc">${esc(com.descricao)}</div>
@@ -1707,10 +1708,23 @@ function addHourToTime(timeStr) {
   return String((h + 1) % 24).padStart(2, '0') + ':' + String(m).padStart(2, '0');
 }
 
+function isValidDateStr(val) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(val || '');
+}
+
+function sanitizeTimeStr(val) {
+  if (!val) return '';
+  const s = String(val);
+  if (/^\d{2}:\d{2}$/.test(s)) return s;
+  const m = s.match(/(\d{2}):(\d{2})/);
+  return m ? m[1] + ':' + m[2] : '';
+}
+
 function formatGCalDate(dateStr, timeStr) {
-  if (!dateStr) return '';
+  if (!isValidDateStr(dateStr)) return '';
   const d = dateStr.replace(/-/g, '');
-  const t = timeStr ? timeStr.replace(':', '') + '00' : '000000';
+  const cleanTime = sanitizeTimeStr(timeStr);
+  const t = cleanTime ? cleanTime.replace(':', '') + '00' : '000000';
   return d + 'T' + t;
 }
 
@@ -1728,20 +1742,21 @@ function renderComunicadosPub() {
     return a.dataEvento.localeCompare(b.dataEvento);
   });
   container.innerHTML = sorted.map((com) => {
-    const dataFmt = com.dataEvento
+    const dataFmt = isValidDateStr(com.dataEvento)
       ? new Date(com.dataEvento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
       : '';
+    const horaFmt = sanitizeTimeStr(com.horaEvento);
     const imgHtml = com.imagem
       ? `<img src="${com.imagem}" class="comunicado-card-img" alt="${esc(com.titulo)}" />`
       : `<div class="comunicado-card-img-placeholder">📢</div>`;
-    const startDate = formatGCalDate(com.dataEvento, com.horaEvento);
-    const endDate   = formatGCalDate(com.dataEvento, addHourToTime(com.horaEvento));
+    const startDate = formatGCalDate(com.dataEvento, horaFmt);
+    const endDate   = formatGCalDate(com.dataEvento, addHourToTime(horaFmt));
     const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(com.titulo)}&dates=${startDate}/${endDate}&details=${encodeURIComponent(com.descricao)}&location=${encodeURIComponent(com.local || '')}`;
     return `
       <div class="comunicado-card">
         ${imgHtml}
         <div class="comunicado-card-body">
-          ${dataFmt ? `<span class="comunicado-card-date">📅 ${dataFmt}${com.horaEvento ? ' · ' + esc(com.horaEvento) : ''}</span>` : ''}
+          ${dataFmt ? `<span class="comunicado-card-date">📅 ${dataFmt}${horaFmt ? ' · ' + esc(horaFmt) : ''}</span>` : ''}
           <div class="comunicado-card-title">${esc(com.titulo)}</div>
           ${com.local ? `<div class="comunicado-card-location">📍 ${esc(com.local)}</div>` : ''}
           <div class="comunicado-card-desc">${esc(com.descricao)}</div>
