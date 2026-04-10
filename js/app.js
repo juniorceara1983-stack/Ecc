@@ -36,6 +36,9 @@ const STORAGE_KEY  = 'ecc_casais';
 const SENHA_KEY    = 'ecc_dir_senha';
 const SENHA_PADRAO = 'ecc2024';
 
+// URL do Google Apps Script implantado
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiXzfMNlhqrGUmaIWbOm5zEj7cnK1XdgWPdmqPbFQtXKouPM0GlFJBSiVLisbd0YbD/exec';
+
 /* ===================================================
    STATE
    =================================================== */
@@ -70,6 +73,86 @@ function getSenha() {
 
 function setSenha(nova) {
   localStorage.setItem(SENHA_KEY, nova);
+}
+
+/* ===================================================
+   GOOGLE SHEETS INTEGRATION
+   =================================================== */
+
+async function _postParaSheets(payload) {
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+    return await res.json();
+  } catch (err) {
+    console.warn('Erro ao comunicar com Google Sheets:', err);
+    return { ok: false, erro: String(err.message || err) };
+  }
+}
+
+async function sincronizarComSheets(lista) {
+  return _postParaSheets({ acao: 'sincronizar', casais: lista });
+}
+
+async function excluirDoSheets(id) {
+  return _postParaSheets({ acao: 'excluir', id });
+}
+
+async function importarDoSheets() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?acao=exportar`, { redirect: 'follow' });
+    const data = await res.json();
+    if (data.ok && Array.isArray(data.casais)) return data.casais;
+    console.warn('Resposta inesperada da planilha:', data);
+    return null;
+  } catch (err) {
+    console.warn('Erro ao importar do Google Sheets:', err);
+    return null;
+  }
+}
+
+// Mapeia uma linha exportada da planilha para o formato local
+function casalDaPlanilha(row) {
+  const jaServiu = row['Já Serviu'] === 'Sim';
+  const pastasServidas = row['Equipes de Trabalho']
+    ? String(row['Equipes de Trabalho']).split(';').map((s) => s.trim()).filter(Boolean)
+    : [];
+  const jaFoiCoordenador = row['Coordenador'] === 'Sim';
+  const pastasCoordenadasDe = row['Equipes Coordenadas']
+    ? String(row['Equipes Coordenadas']).split(';').map((s) => s.trim()).filter(Boolean)
+    : [];
+  const jaFoiDirigente = row['Dirigente'] === 'Sim';
+  const gostariaDeServir = row['Gostaria de Servir em']
+    ? String(row['Gostaria de Servir em']).split(';').map((s) => s.trim()).filter(Boolean)
+    : [];
+  const esposo = String(row['Esposo'] || '');
+  const esposa = String(row['Esposa'] || '');
+  const telEsposo = String(row['Tel. Esposo'] || '');
+  const telEsposa = String(row['Tel. Esposa'] || '');
+  return {
+    id: String(row['ID'] || gerarId()),
+    nomeEsposo: esposo,
+    nomeEsposa: esposa,
+    nomes: [esposo, esposa].filter(Boolean).join(' & '),
+    telEsposo,
+    telEsposa,
+    contato: [telEsposo, telEsposa].filter(Boolean).join(' / '),
+    endereco: String(row['Endereço'] || ''),
+    anoRetiro: parseInt(row['Ano Retiro'], 10) || 0,
+    jaServiu,
+    pastasServidas,
+    jaFoiCoordenador,
+    pastasCoordenadasDe,
+    jaFoiDirigente,
+    anoDirigente: jaFoiDirigente ? (parseInt(row['Ano Dirigente'], 10) || null) : null,
+    pastaDirigente: jaFoiDirigente ? String(row['Pasta Dirigente'] || '') : '',
+    participaPastoral: jaServiu ? String(row['Pastoral'] || '') : '',
+    gostariaDeServir,
+  };
 }
 
 /* ===================================================
@@ -605,6 +688,9 @@ if (btnSalvar) {
     fecharModal(modalCadastro);
     renderTabela();
     renderTabelaDirigente(aplicarFiltrosAtivos());
+    sincronizarComSheets([data]).then((res) => {
+      if (res && !res.ok) console.warn('Falha ao sincronizar casal com a planilha:', res.erro);
+    });
   });
 }
 
@@ -721,6 +807,9 @@ function handleRowAction(e) {
       salvar();
       renderTabela();
       renderTabelaDirigente(aplicarFiltrosAtivos());
+      excluirDoSheets(id).then((res) => {
+        if (res && !res.ok) console.warn('Falha ao excluir casal da planilha:', res.erro);
+      });
     }
   }
 }
@@ -982,6 +1071,76 @@ function esc(str) {
 
 function gerarId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+/* ===================================================
+   SHEETS SYNC BUTTONS  (admin.html only)
+   =================================================== */
+
+function _setSheetsMsg(msg, tipo) {
+  const el = $('sheets-msg');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `sheets-msg msg-${tipo || 'ok'}`;
+  el.removeAttribute('hidden');
+  if (tipo !== 'loading') {
+    setTimeout(() => el.setAttribute('hidden', ''), 4000);
+  }
+}
+
+const btnImportarSheets  = $('btn-importar-sheets');
+const btnSincronizarTudo = $('btn-sincronizar-tudo');
+
+if (btnImportarSheets) {
+  btnImportarSheets.addEventListener('click', async () => {
+    _setSheetsMsg('Importando da planilha…', 'loading');
+    btnImportarSheets.disabled = true;
+    const linhas = await importarDoSheets();
+    btnImportarSheets.disabled = false;
+    if (!linhas) {
+      _setSheetsMsg('Erro ao importar. Verifique a conexão e as permissões.', 'erro');
+      return;
+    }
+    if (linhas.length === 0) {
+      _setSheetsMsg('A planilha está vazia.', 'ok');
+      return;
+    }
+    // Merge: spreadsheet data wins for existing IDs; local-only entries are preserved
+    const mapaLocal = {};
+    casais.forEach((c) => { mapaLocal[c.id] = c; });
+    linhas.forEach((row) => {
+      const c = casalDaPlanilha(row);
+      // Preserve local photos if we already have the couple
+      if (mapaLocal[c.id]) {
+        c.fotoEsposo = mapaLocal[c.id].fotoEsposo || null;
+        c.fotoEsposa = mapaLocal[c.id].fotoEsposa || null;
+      }
+      mapaLocal[c.id] = c;
+    });
+    casais = Object.values(mapaLocal);
+    salvar();
+    renderTabela();
+    renderTabelaDirigente(aplicarFiltrosAtivos());
+    _setSheetsMsg(`${linhas.length} casal(is) importado(s) com sucesso!`, 'ok');
+  });
+}
+
+if (btnSincronizarTudo) {
+  btnSincronizarTudo.addEventListener('click', async () => {
+    if (!casais.length) {
+      _setSheetsMsg('Nenhum casal para sincronizar.', 'ok');
+      return;
+    }
+    _setSheetsMsg('Sincronizando com a planilha…', 'loading');
+    btnSincronizarTudo.disabled = true;
+    const res = await sincronizarComSheets(casais);
+    btnSincronizarTudo.disabled = false;
+    if (res && res.ok) {
+      _setSheetsMsg(`${casais.length} casal(is) sincronizado(s)!`, 'ok');
+    } else {
+      _setSheetsMsg('Erro ao sincronizar: ' + ((res && res.erro) || 'desconhecido'), 'erro');
+    }
+  });
 }
 
 /* ===================================================
