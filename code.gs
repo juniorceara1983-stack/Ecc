@@ -22,10 +22,12 @@
 var SHEET_ID = '1o9h8x2mmifnHjJINmPL0Y5HgXsEDxRaP53sA_hBnfMY';
 
 // Nomes das abas
-var ABA_CASAIS    = 'Casais';
-var ABA_SUGESTOES = 'Sugestões Retiro';
-var ABA_BLOQUEIOS = 'Logins Bloqueados';
-var ABA_CONFIG    = 'Configurações';
+var ABA_CASAIS       = 'Casais';
+var ABA_SUGESTOES    = 'Sugestões Retiro';
+var ABA_BLOQUEIOS    = 'Logins Bloqueados';
+var ABA_CONFIG       = 'Configurações';
+var ABA_COMUNICADOS  = 'Comunicados';
+var ABA_QUIZ_RANKING = 'Quiz Ranking';
 
 // Cabeçalho da aba principal
 var CABECALHO_CASAIS = [
@@ -89,6 +91,12 @@ function casalParaLinha(c) {
 
 // Cabeçalho da aba de configurações
 var CABECALHO_CONFIG = ['Chave', 'Valor', 'Data'];
+
+// Cabeçalho da aba de comunicados
+var CABECALHO_COMUNICADOS = ['ID', 'Titulo', 'Descricao', 'DataEvento', 'HoraEvento', 'Local', 'Imagem', 'CriadoEm'];
+
+// Cabeçalho do ranking de quiz
+var CABECALHO_QUIZ_RANKING = ['Login', 'Pontuacao', 'TotalRespondidas', 'Mes', 'DataAtualizacao'];
 
 // ── Helpers de configurações ─────────────────────────────────────────────────
 
@@ -194,6 +202,15 @@ function doPost(e) {
     } else if (acao === 'salvarConfig' && payload.chave) {
       var sheetConf = getConfigSheet(ss);
       salvarConfiguracao(sheetConf, payload.chave, payload.valor || '');
+    } else if (acao === 'salvarComunicado' && payload.comunicado) {
+      var sheetCom = getOrCreateSheet(ss, ABA_COMUNICADOS, CABECALHO_COMUNICADOS);
+      salvarComunicado(sheetCom, payload.comunicado);
+    } else if (acao === 'excluirComunicado' && payload.id) {
+      var sheetComDel = getOrCreateSheet(ss, ABA_COMUNICADOS, CABECALHO_COMUNICADOS);
+      excluirComunicado(sheetComDel, payload.id);
+    } else if (acao === 'salvarQuizScore' && payload.score) {
+      var sheetQuiz = getOrCreateSheet(ss, ABA_QUIZ_RANKING, CABECALHO_QUIZ_RANKING);
+      salvarQuizScore(sheetQuiz, payload.score);
     }
 
     return ContentService
@@ -255,6 +272,23 @@ function doGet(e) {
       var valor = getConfiguracao(sheetConf, chave);
       return ContentService
         .createTextOutput(JSON.stringify({ ok: true, valor: valor }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (acao === 'listarComunicados') {
+      var sheetComList = getOrCreateSheet(ss, ABA_COMUNICADOS, CABECALHO_COMUNICADOS);
+      var comunicados = listarComunicados(sheetComList);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, comunicados: comunicados }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (acao === 'listarQuizRanking') {
+      var mes = params.mes || '';
+      var sheetRank = getOrCreateSheet(ss, ABA_QUIZ_RANKING, CABECALHO_QUIZ_RANKING);
+      var ranking = listarQuizRanking(sheetRank, mes);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, ranking: ranking }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -331,6 +365,93 @@ function gerarSugestoes(sheet, pasta) {
         anoRetiro: linha[6],
       };
     });
+}
+
+// ── Comunicados ───────────────────────────────────────────────────────────────
+
+function salvarComunicado(sheet, com) {
+  var dados = sheet.getDataRange().getValues();
+  for (var i = 1; i < dados.length; i++) {
+    if (String(dados[i][0]) === String(com.id)) {
+      sheet.getRange(i + 1, 1, 1, CABECALHO_COMUNICADOS.length).setValues([[
+        com.id, com.titulo || '', com.descricao || '', com.dataEvento || '',
+        com.horaEvento || '', com.local || '', '', com.criadoEm || '',
+      ]]);
+      return;
+    }
+  }
+  sheet.appendRow([
+    com.id, com.titulo || '', com.descricao || '', com.dataEvento || '',
+    com.horaEvento || '', com.local || '', '', com.criadoEm || '',
+  ]);
+}
+
+function excluirComunicado(sheet, id) {
+  var dados = sheet.getDataRange().getValues();
+  for (var i = dados.length - 1; i >= 1; i--) {
+    if (String(dados[i][0]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      break;
+    }
+  }
+}
+
+function listarComunicados(sheet) {
+  var dados = sheet.getDataRange().getValues();
+  if (dados.length <= 1) return [];
+  return dados.slice(1).map(function(row) {
+    return {
+      id: String(row[0] || ''),
+      titulo: String(row[1] || ''),
+      descricao: String(row[2] || ''),
+      dataEvento: String(row[3] || ''),
+      horaEvento: String(row[4] || ''),
+      local: String(row[5] || ''),
+      criadoEm: String(row[7] || ''),
+    };
+  });
+}
+
+// ── Quiz Ranking ──────────────────────────────────────────────────────────────
+
+function salvarQuizScore(sheet, score) {
+  var login = String(score.login || '');
+  var mes   = String(score.mes   || '');
+  var dados = sheet.getDataRange().getValues();
+  for (var i = 1; i < dados.length; i++) {
+    if (String(dados[i][0]).toLowerCase() === login.toLowerCase() &&
+        String(dados[i][3]) === mes) {
+      sheet.getRange(i + 1, 2).setValue(Number(score.pontuacao)      || 0);
+      sheet.getRange(i + 1, 3).setValue(Number(score.totalRespondidas) || 0);
+      sheet.getRange(i + 1, 5).setValue(new Date().toLocaleString('pt-BR'));
+      return;
+    }
+  }
+  sheet.appendRow([
+    login,
+    Number(score.pontuacao)       || 0,
+    Number(score.totalRespondidas) || 0,
+    mes,
+    new Date().toLocaleString('pt-BR'),
+  ]);
+}
+
+function listarQuizRanking(sheet, mes) {
+  var dados = sheet.getDataRange().getValues();
+  if (dados.length <= 1) return [];
+  var rows = dados.slice(1);
+  if (mes) {
+    rows = rows.filter(function(r){ return String(r[3]) === mes; });
+  }
+  rows.sort(function(a, b){ return Number(b[1]) - Number(a[1]); });
+  return rows.slice(0, 10).map(function(row) {
+    return {
+      login: String(row[0] || ''),
+      pontuacao: Number(row[1]) || 0,
+      totalRespondidas: Number(row[2]) || 0,
+      mes: String(row[3] || ''),
+    };
+  });
 }
 
 // ── Planilha de sugestões (aba separada) ─────────────────────────────────────

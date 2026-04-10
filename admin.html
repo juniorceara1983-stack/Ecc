@@ -32,96 +32,162 @@
 
   <header class="app-header">
     <h1>ECC <span>Painel Administrativo</span></h1>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="admin-tab-gestao">📋 Gestão</button>
+      <button class="tab-btn" data-tab="admin-tab-comunicados">📢 Comunicados</button>
+      <button class="tab-btn" data-tab="admin-tab-config">⚙️ Configurações</button>
+    </div>
     <button id="btn-logout-dir" class="btn btn-outline btn-sm">Sair</button>
   </header>
 
-  <main id="tab-dirigente" class="tab-panel active" hidden>
-    <div class="panel-header">
-      <h2>Gestão de Casais e Retiros</h2>
-      <button id="btn-add-casal-dir" class="btn btn-primary">＋ Adicionar Casal</button>
-    </div>
+  <main id="tab-dirigente" hidden>
 
-    <div class="dirigente-tools">
-      <div class="tools-column">
-        <div class="tool-card highlight">
-          <h3>🚀 Ajuda para Formar Retiro</h3>
-          <p class="tool-desc">Selecione uma pasta para ver casais sugeridos (que nunca serviram nela):</p>
-          <select id="sugestao-pasta" class="form-control">
-            <option value="">Selecione uma pasta...</option>
-          </select>
-          <button id="btn-ajuda-retiro" class="btn btn-accent btn-block">Sugerir Casais</button>
-          <button id="btn-nunca-serviram" class="btn btn-outline btn-block">👥 Casais que Nunca Serviram</button>
-          <button id="btn-baixar-sugestao" class="btn btn-outline btn-block">📄 Baixar PDF da Sugestão</button>
+    <!-- ===== TAB 1: GESTÃO ===== -->
+    <section id="admin-tab-gestao" class="tab-panel active">
+      <div class="panel-header">
+        <h2>Gestão de Casais e Retiros</h2>
+        <button id="btn-add-casal-dir" class="btn btn-primary">＋ Adicionar Casal</button>
+      </div>
+
+      <div class="dirigente-tools">
+        <div class="tools-column">
+          <div class="tool-card highlight">
+            <h3>🚀 Ajuda para Formar Retiro</h3>
+            <p class="tool-desc">Selecione uma pasta para ver casais sugeridos (que nunca serviram nela):</p>
+            <select id="sugestao-pasta" class="form-control">
+              <option value="">Selecione uma pasta...</option>
+            </select>
+            <button id="btn-ajuda-retiro" class="btn btn-accent btn-block">Sugerir Casais</button>
+            <button id="btn-nunca-serviram" class="btn btn-outline btn-block">👥 Casais que Nunca Serviram</button>
+            <button id="btn-baixar-sugestao" class="btn btn-outline btn-block">📄 Baixar PDF da Sugestão</button>
+          </div>
+
+          <div class="tool-card">
+            <h3>Buscar</h3>
+            <input type="text" id="busca-nome" class="form-control" placeholder="Nome do casal..." />
+            <input type="number" id="busca-ano" class="form-control mt-half" placeholder="Ano do retiro..." min="1980" max="2099" />
+            <span id="label-filtro-ativo" class="label-filtro-ativo"></span>
+            <button id="btn-buscar" class="btn btn-secondary btn-block">Filtrar</button>
+            <button id="btn-limpar-busca" class="btn btn-outline btn-block">Limpar</button>
+          </div>
         </div>
 
         <div class="tool-card">
-          <h3>Buscar</h3>
-          <input type="text" id="busca-nome" class="form-control" placeholder="Nome do casal..." />
-          <input type="number" id="busca-ano" class="form-control mt-half" placeholder="Ano do retiro..." min="1980" max="2099" />
-          <span id="label-filtro-ativo" class="label-filtro-ativo"></span>
-          <button id="btn-buscar" class="btn btn-secondary btn-block">Filtrar</button>
-          <button id="btn-limpar-busca" class="btn btn-outline btn-block">Limpar</button>
+          <h3>Filtro por Pastas</h3>
+          <div id="filtro-pastas" class="checkbox-grid"></div>
+          <button id="btn-aplicar-pastas" class="btn btn-secondary btn-block">Aplicar Filtro</button>
+          <button id="btn-baixar-relatorio-pasta" class="btn btn-outline btn-block">📄 Baixar PDF por Pasta</button>
         </div>
       </div>
 
-      <div class="tool-card">
-        <h3>Filtro por Pastas</h3>
-        <div id="filtro-pastas" class="checkbox-grid"></div>
-        <button id="btn-aplicar-pastas" class="btn btn-secondary btn-block">Aplicar Filtro</button>
-        <button id="btn-baixar-relatorio-pasta" class="btn btn-outline btn-block">📄 Baixar PDF por Pasta</button>
+      <div class="table-wrapper">
+        <table id="tabela-dirigente">
+          <thead>
+            <tr>
+              <th>Esposo</th>
+              <th>Esposa</th>
+              <th>Telefones</th>
+              <th>Ano Retiro</th>
+              <th>Pastas</th>
+              <th>Coordenador</th>
+              <th>Dirigente</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-dirigente"></tbody>
+        </table>
+        <div id="msg-vazio-dir" class="msg-vazio">Nenhum casal encontrado.</div>
+      </div>
+    </section>
+
+    <!-- ===== TAB 2: COMUNICADOS ===== -->
+    <section id="admin-tab-comunicados" class="tab-panel">
+      <div class="panel-header">
+        <h2>Gerenciar Comunicados</h2>
       </div>
 
-      <div class="tool-card">
-        <h3>☁️ Google Sheets</h3>
-        <p class="tool-desc">Sincronize os dados com a planilha vinculada.</p>
-        <button id="btn-sincronizar-tudo" class="btn btn-accent btn-block">🔄 Sincronizar Tudo</button>
-        <p id="sheets-msg" class="sheets-msg" hidden></p>
+      <div class="tool-card comunicado-form-card">
+        <h3>➕ Novo Comunicado / Evento</h3>
+        <form id="form-comunicado" novalidate>
+          <div class="form-grid-2">
+            <label class="form-label-full">Título
+              <input type="text" id="com-titulo" class="form-control" placeholder="Título do comunicado..." required />
+            </label>
+            <label>Data do Evento
+              <input type="date" id="com-data" class="form-control" />
+            </label>
+            <label>Horário
+              <input type="time" id="com-hora" class="form-control" />
+            </label>
+          </div>
+          <label class="mt-half">Local
+            <input type="text" id="com-local" class="form-control" placeholder="Endereço ou nome do local..." />
+          </label>
+          <label class="mt-half">Descrição
+            <textarea id="com-descricao" class="form-control" rows="4" placeholder="Descrição detalhada do evento..."></textarea>
+          </label>
+          <label class="mt-half">Imagem / Flyer
+            <input type="file" id="com-imagem" class="form-control" accept="image/*" />
+            <div id="com-preview" class="comunicado-img-preview"></div>
+          </label>
+          <p id="com-msg" class="sheets-msg" hidden></p>
+          <button type="submit" class="btn btn-primary btn-block mt-1">💾 Salvar Comunicado</button>
+        </form>
       </div>
 
-      <div class="tool-card">
-        <h3>🔒 Bloqueios de Login</h3>
-        <p class="tool-desc">Controle quais casais podem fazer novas inscrições. O bloqueio fica salvo na planilha e persiste mesmo após limpar o cache ou reinstalar o app.</p>
-        <div class="bloqueio-input-row">
-          <input type="text" id="bloquear-login-input" class="form-control" placeholder="Nome do casal a bloquear…" />
-          <button id="btn-bloquear-login" class="btn btn-danger btn-sm">🔒 Bloquear</button>
+      <h3 class="section-subtitle">Comunicados Criados</h3>
+      <div id="lista-comunicados-admin" class="comunicados-admin-list">
+        <p class="msg-vazio visivel">Nenhum comunicado criado ainda.</p>
+      </div>
+    </section>
+
+    <!-- ===== TAB 3: CONFIGURAÇÕES ===== -->
+    <section id="admin-tab-config" class="tab-panel">
+      <div class="panel-header">
+        <h2>Configurações</h2>
+      </div>
+
+      <div class="config-grid">
+        <div class="tool-card">
+          <h3>☁️ Google Sheets</h3>
+          <p class="tool-desc">Sincronize os dados com a planilha vinculada.</p>
+          <button id="btn-sincronizar-tudo" class="btn btn-accent btn-block">🔄 Sincronizar Tudo</button>
+          <p id="sheets-msg" class="sheets-msg" hidden></p>
         </div>
-        <button id="btn-carregar-bloqueios" class="btn btn-secondary btn-block">🔄 Atualizar Lista</button>
-        <div id="lista-bloqueios" class="lista-bloqueios"></div>
+
+        <div class="tool-card">
+          <h3>🔒 Bloqueios de Login</h3>
+          <p class="tool-desc">Controle quais casais podem fazer novas inscrições. O bloqueio fica salvo na planilha e persiste mesmo após limpar o cache ou reinstalar o app.</p>
+          <div class="bloqueio-input-row">
+            <input type="text" id="bloquear-login-input" class="form-control" placeholder="Nome do casal a bloquear…" />
+            <button id="btn-bloquear-login" class="btn btn-danger btn-sm">🔒 Bloquear</button>
+          </div>
+          <button id="btn-carregar-bloqueios" class="btn btn-secondary btn-block">🔄 Atualizar Lista</button>
+          <div id="lista-bloqueios" class="lista-bloqueios"></div>
+        </div>
+
+        <div class="tool-card">
+          <h3>🔑 Alterar Senha do Painel</h3>
+          <form id="form-mudar-senha">
+            <label>Senha Atual
+              <input type="password" id="senha-atual" class="form-control" placeholder="••••••" required autocomplete="current-password" />
+            </label>
+            <label class="mt-half">Nova Senha
+              <input type="password" id="senha-nova" class="form-control" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" />
+            </label>
+            <p id="mudar-senha-msg" class="mudar-senha-msg" hidden></p>
+            <button type="submit" class="btn btn-primary btn-block mt-1">Alterar Senha</button>
+          </form>
+        </div>
+
+        <div class="tool-card">
+          <h3>🏆 Ranking do Quiz</h3>
+          <p class="tool-desc">Baixe o ranking mensal do Quiz em PDF para impressão ou compartilhamento.</p>
+          <button id="btn-baixar-ranking-quiz" class="btn btn-accent btn-block">📄 Baixar Ranking PDF</button>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="table-wrapper">
-      <table id="tabela-dirigente">
-        <thead>
-          <tr>
-            <th>Esposo</th>
-            <th>Esposa</th>
-            <th>Telefones</th>
-            <th>Ano Retiro</th>
-            <th>Pastas</th>
-            <th>Coordenador</th>
-            <th>Dirigente</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="tbody-dirigente"></tbody>
-      </table>
-      <div id="msg-vazio-dir" class="msg-vazio">Nenhum casal encontrado.</div>
-    </div>
-
-    <div class="tool-card mt-2 card-narrow">
-      <h3>🔑 Alterar Senha do Painel</h3>
-      <form id="form-mudar-senha">
-        <label>Senha Atual
-          <input type="password" id="senha-atual" class="form-control" placeholder="••••••" required autocomplete="current-password" />
-        </label>
-        <label class="mt-half">Nova Senha
-          <input type="password" id="senha-nova" class="form-control" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" />
-        </label>
-        <p id="mudar-senha-msg" class="mudar-senha-msg" hidden></p>
-        <button type="submit" class="btn btn-primary btn-block mt-1">Alterar Senha</button>
-      </form>
-    </div>
   </main>
 
   <!-- ===== MODAL: CADASTRO ===== -->
