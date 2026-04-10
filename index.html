@@ -33,6 +33,11 @@
 
   <header class="app-header">
     <h1>ECC <span>Encontro de Casais com Cristo</span></h1>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-ecc">🏠 Início</button>
+      <button class="tab-btn" data-tab="tab-comunicados">📢 Comunicados</button>
+      <button class="tab-btn" data-tab="tab-quiz">🎯 Quiz</button>
+    </div>
     <div class="header-right">
       <span id="ecc-nome-logado" class="ecc-nome-logado"></span>
       <a href="admin.html" class="btn-admin-access" title="Painel do Dirigente">🔐</a>
@@ -69,6 +74,73 @@
           <tbody id="tbody-casais"></tbody>
         </table>
         <div id="msg-vazio" class="msg-vazio">Nenhum casal cadastrado ainda.</div>
+      </div>
+    </section>
+
+    <!-- ===== TAB 2: COMUNICADOS ===== -->
+    <section id="tab-comunicados" class="tab-panel">
+      <div class="panel-header">
+        <h2>📢 Comunicados e Eventos</h2>
+      </div>
+      <div id="lista-comunicados-pub" class="comunicados-grid">
+        <p class="msg-vazio visivel">Nenhum comunicado disponível no momento.</p>
+      </div>
+    </section>
+
+    <!-- ===== TAB 3: QUIZ ===== -->
+    <section id="tab-quiz" class="tab-panel">
+      <div class="panel-header">
+        <h2>🎯 Quiz do ECC</h2>
+      </div>
+
+      <div id="quiz-area">
+        <!-- Quiz intro -->
+        <div id="quiz-intro" class="quiz-intro-card">
+          <div class="quiz-intro-icon">🎯</div>
+          <h3>Quiz Diário do ECC</h3>
+          <p>Teste seus conhecimentos sobre a Bíblia, Santos, ECC, Documentos da Igreja e Catecismo.</p>
+          <p class="quiz-info-text">Você pode responder <strong>10 perguntas por dia</strong>. Cada resposta certa vale <strong>10 pontos</strong>.</p>
+          <div id="quiz-status-info" class="quiz-status-info"></div>
+          <button id="btn-iniciar-quiz" class="btn btn-primary btn-lg">▶ Iniciar Quiz</button>
+        </div>
+
+        <!-- Quiz question -->
+        <div id="quiz-question-area" class="quiz-question-area" hidden>
+          <div class="quiz-progress-bar-wrap">
+            <div id="quiz-progress-bar" class="quiz-progress-bar"></div>
+          </div>
+          <div class="quiz-meta-row">
+            <span id="quiz-counter" class="quiz-counter"></span>
+            <span id="quiz-score-live" class="quiz-score-live"></span>
+          </div>
+          <div id="quiz-category-badge" class="quiz-category-badge"></div>
+          <div id="quiz-question-card" class="quiz-question-card">
+            <p id="quiz-pergunta" class="quiz-pergunta"></p>
+            <div id="quiz-opcoes" class="quiz-opcoes"></div>
+            <div id="quiz-feedback" class="quiz-feedback" hidden></div>
+            <button id="btn-proxima" class="btn btn-primary btn-block mt-1" hidden>Próxima →</button>
+          </div>
+        </div>
+
+        <!-- Quiz result -->
+        <div id="quiz-result-area" class="quiz-result-area" hidden>
+          <div class="quiz-result-icon" id="quiz-result-icon">🏆</div>
+          <h3 id="quiz-result-title">Parabéns!</h3>
+          <p id="quiz-result-text"></p>
+          <div class="quiz-result-score">
+            <span id="quiz-result-pontos" class="quiz-result-pontos"></span>
+          </div>
+          <button id="btn-ver-ranking" class="btn btn-outline mt-1">🏅 Ver Ranking</button>
+          <button id="btn-quiz-voltar" class="btn btn-primary mt-1">Voltar ao Início</button>
+        </div>
+      </div>
+
+      <!-- Ranking -->
+      <div id="quiz-ranking-area" class="quiz-ranking-area mt-2">
+        <h3 class="section-subtitle">🏅 Ranking Mensal — Top 10</h3>
+        <div id="quiz-ranking-list" class="quiz-ranking-list">
+          <p class="msg-vazio visivel">Carregando ranking...</p>
+        </div>
       </div>
     </section>
   </main>
