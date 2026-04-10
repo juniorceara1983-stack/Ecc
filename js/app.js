@@ -42,6 +42,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYIU9U7PUjAHpxxWeEl
 // Chaves de proteção de dispositivo
 const ECC_CASAL_REGISTRADO_KEY = 'ecc_casal_registrado';
 const ECC_INSCRICAO_KEY        = 'ecc_inscricao_bloqueada';
+const ECC_CASAL_ID_KEY         = 'ecc_casal_id';
 
 /* ===================================================
    STATE
@@ -101,9 +102,18 @@ function liberarInscricao() {
   localStorage.removeItem(ECC_INSCRICAO_KEY);
 }
 
+function getCasalId() {
+  return localStorage.getItem(ECC_CASAL_ID_KEY) || null;
+}
+
+function setCasalId(id) {
+  localStorage.setItem(ECC_CASAL_ID_KEY, id);
+}
+
 function redefinirDispositivo() {
   localStorage.removeItem(ECC_CASAL_REGISTRADO_KEY);
   localStorage.removeItem(ECC_INSCRICAO_KEY);
+  localStorage.removeItem(ECC_CASAL_ID_KEY);
 }
 
 /* ===================================================
@@ -757,6 +767,7 @@ if (btnSalvar) {
     // (only in the public view – admin panel is unrestricted)
     if (isNovo && $('tbody-casais') && !$('tbody-dirigente')) {
       bloquearInscricao();
+      setCasalId(data.id);
       atualizarEstadoBotaoCadastro();
     }
   });
@@ -798,14 +809,21 @@ function renderTabela() {
   const msgVazioEcc = $('msg-vazio');
   if (!tbodyEcc) return;
 
+  // In the public panel, only the registered couple's own data is visible.
+  // All other inscriptions are restricted to the admin panel.
+  const casalIdRegistrado = getCasalId();
+  const listaCasais = casalIdRegistrado
+    ? casais.filter((c) => c.id === casalIdRegistrado)
+    : [];
+
   tbodyEcc.innerHTML = '';
-  if (casais.length === 0) {
+  if (listaCasais.length === 0) {
     if (msgVazioEcc) msgVazioEcc.classList.add('visivel');
     return;
   }
   if (msgVazioEcc) msgVazioEcc.classList.remove('visivel');
 
-  casais.forEach((c) => {
+  listaCasais.forEach((c) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="fotos-cell">${avatarHtml(c.fotoEsposo, getEsposo(c))} ${avatarHtml(c.fotoEsposa, getEsposa(c))}</td>
@@ -818,7 +836,6 @@ function renderTabela() {
       <td class="actions-cell">
         <button class="btn btn-sm btn-outline" data-action="ver" data-id="${c.id}">Ver</button>
         <button class="btn btn-sm btn-secondary" data-action="editar" data-id="${c.id}">Editar</button>
-        <button class="btn btn-sm btn-danger" data-action="excluir" data-id="${c.id}">Excluir</button>
       </td>`;
     tbodyEcc.appendChild(tr);
   });
@@ -1000,8 +1017,56 @@ document.addEventListener('change', (e) => {
 });
 
 /* ===================================================
-   CSV EXPORT  (admin.html)
+   PDF EXPORT  (admin.html)
    =================================================== */
+
+function _gerarHtmlPDF(titulo, cabecalho, linhas) {
+  const thCells = cabecalho.map((h) => `<th>${esc(h)}</th>`).join('');
+  const trRows  = linhas.map((r) =>
+    `<tr>${r.map((v) => `<td>${esc(String(v ?? ''))}</td>`).join('')}</tr>`
+  ).join('');
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>${esc(titulo)}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11px; margin: 1cm; color: #222; }
+  h1 { font-size: 15px; margin-bottom: 4px; color: #1a5276; }
+  p.data { font-size: 10px; color: #555; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #ccc; padding: 5px 7px; text-align: left; }
+  th { background: #1a5276; color: #fff; }
+  tr:nth-child(even) { background: #f2f6fa; }
+  @media print { @page { margin: 1cm; } button { display: none; } }
+</style>
+</head>
+<body>
+<h1>${esc(titulo)}</h1>
+<p class="data">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+<table>
+  <thead><tr>${thCells}</tr></thead>
+  <tbody>${trRows}</tbody>
+</table>
+<br/>
+<button onclick="window.print()" style="padding:6px 14px;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+</body>
+</html>`;
+}
+
+function baixarPDF(titulo, cabecalho, linhas) {
+  const html = _gerarHtmlPDF(titulo, cabecalho, linhas);
+  const win  = window.open('', '_blank');
+  if (!win) {
+    alert('Permita janelas pop-up para gerar o PDF.');
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  // Allow browser time to render content before triggering print dialog
+  setTimeout(() => win.print(), 400);
+}
 
 function gerarCSV(lista) {
   const header = [
@@ -1030,18 +1095,6 @@ function gerarCSV(lista) {
   return [header, ...rows]
     .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
     .join('\r\n');
-}
-
-function baixarCSV(nomeArquivo, conteudo) {
-  const blob = new Blob(['\ufeff' + conteudo], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = nomeArquivo;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 /* ===================================================
@@ -1132,7 +1185,18 @@ if (btnBaixarSugestao) {
       alert('Nenhum resultado disponível. Aplique um filtro primeiro.');
       return;
     }
-    baixarCSV('sugestao-retiro.csv', gerarCSV(lista));
+    const pastaAtual = sugestaoPastaSelect ? sugestaoPastaSelect.value : '';
+    const cabecalho  = ['Equipe', 'Esposo', 'Esposa', 'Tel. Esposo', 'Tel. Esposa', 'Ano Retiro'];
+    const linhas     = lista.map((c) => [
+      pastaAtual || '',
+      c.nomeEsposo || '',
+      c.nomeEsposa || '',
+      c.telEsposo  || '',
+      c.telEsposa  || '',
+      c.anoRetiro  || '',
+    ]);
+    const titulo = pastaAtual ? `Sugestão de Retiro – ${pastaAtual}` : 'Sugestão de Retiro';
+    baixarPDF(titulo, cabecalho, linhas);
   });
 }
 
@@ -1143,7 +1207,22 @@ if (btnBaixarRelatorioPasta) {
       alert('Nenhum resultado disponível. Aplique um filtro primeiro.');
       return;
     }
-    baixarCSV('relatorio-por-pasta.csv', gerarCSV(lista));
+    const cabecalho = [
+      'Esposo', 'Esposa', 'Tel. Esposo', 'Tel. Esposa',
+      'Ano Retiro', 'Já Serviu', 'Pastas Servidas', 'Coordenador', 'Dirigente',
+    ];
+    const linhas = lista.map((c) => [
+      c.nomeEsposo || '',
+      c.nomeEsposa || '',
+      c.telEsposo  || '',
+      c.telEsposa  || '',
+      c.anoRetiro  || '',
+      c.jaServiu ? 'Sim' : 'Não',
+      (c.pastasServidas || []).join('; '),
+      c.jaFoiCoordenador ? 'Sim' : 'Não',
+      c.jaFoiDirigente   ? 'Sim' : 'Não',
+    ]);
+    baixarPDF('Relatório por Pasta', cabecalho, linhas);
   });
 }
 
