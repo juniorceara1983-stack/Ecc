@@ -854,6 +854,31 @@ tbody td { padding: 1rem; font-size: 0.9rem; vertical-align: middle; }
 .mt-2    { margin-top: 2rem; }
 .card-narrow { max-width: 480px; }
 
+/* ---------- Sheets / senha mensagens ---------- */
+.sheets-msg,
+.mudar-senha-msg {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+.sheets-msg.msg-ok,
+.mudar-senha-msg.msg-ok {
+  background: #d1fae5;
+  color: #065f46;
+}
+.sheets-msg.msg-erro,
+.mudar-senha-msg.msg-erro {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.sheets-msg.msg-loading,
+.mudar-senha-msg.msg-loading {
+  background: #ede9fe;
+  color: #4c1d95;
+}
+
 /* ---------- Responsividade ---------- */
 @media (max-width: 700px) {
   .app-header { padding: 0.5rem 1rem; }

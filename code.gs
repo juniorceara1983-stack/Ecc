@@ -19,7 +19,7 @@
 // ── Configuração ──────────────────────────────────────────────────────────────
 // Substitua pelo ID da sua planilha Google Sheets.
 // O ID está na URL: https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit
-var SHEET_ID = 'SEU_SHEET_ID_AQUI';
+var SHEET_ID = '1o9h8x2mmifnHjJINmPL0Y5HgXsEDxRaP53sA_hBnfMY';
 
 // Nomes das abas
 var ABA_CASAIS    = 'Casais';
