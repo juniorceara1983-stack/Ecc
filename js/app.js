@@ -39,6 +39,10 @@ const SENHA_PADRAO = 'ecc2024';
 // URL do Google Apps Script implantado
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYIU9U7PUjAHpxxWeEla8-vrK_pP2iTZg41858yw_2SE8usnUqtk8l6KRwbxX8P71mrw/exec';
 
+// Chaves de proteção de dispositivo
+const ECC_CASAL_REGISTRADO_KEY = 'ecc_casal_registrado';
+const ECC_INSCRICAO_KEY        = 'ecc_inscricao_bloqueada';
+
 /* ===================================================
    STATE
    =================================================== */
@@ -73,6 +77,33 @@ function getSenha() {
 
 function setSenha(nova) {
   localStorage.setItem(SENHA_KEY, nova);
+}
+
+/* ── Device registration helpers ── */
+
+function getCasalRegistrado() {
+  return localStorage.getItem(ECC_CASAL_REGISTRADO_KEY) || null;
+}
+
+function setCasalRegistrado(nome) {
+  localStorage.setItem(ECC_CASAL_REGISTRADO_KEY, nome);
+}
+
+function isInscricaoBloqueada() {
+  return localStorage.getItem(ECC_INSCRICAO_KEY) === 'true';
+}
+
+function bloquearInscricao() {
+  localStorage.setItem(ECC_INSCRICAO_KEY, 'true');
+}
+
+function liberarInscricao() {
+  localStorage.removeItem(ECC_INSCRICAO_KEY);
+}
+
+function redefinirDispositivo() {
+  localStorage.removeItem(ECC_CASAL_REGISTRADO_KEY);
+  localStorage.removeItem(ECC_INSCRICAO_KEY);
 }
 
 /* ===================================================
@@ -193,12 +224,23 @@ const overlayEccLogin = $('overlay-ecc-login');
 const formEccLogin    = $('form-ecc-login');
 const eccLoginNome    = $('ecc-login-nome');
 const eccWelcomeMsg   = $('ecc-welcome-msg');
+const eccLoginErro    = $('ecc-login-erro');
 const eccNomeLogado   = $('ecc-nome-logado');
 
 function mostrarEccLogin() {
   if (overlayEccLogin) {
     overlayEccLogin.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
+
+    // Pre-fill name if device already has a registered couple
+    const nomeCadastrado = getCasalRegistrado();
+    if (nomeCadastrado && eccLoginNome) {
+      eccLoginNome.value = nomeCadastrado;
+      const subtitleEl = overlayEccLogin.querySelector('.login-subtitle');
+      if (subtitleEl) {
+        subtitleEl.textContent = `Dispositivo registrado para: ${nomeCadastrado}`;
+      }
+    }
   }
 }
 
@@ -212,8 +254,26 @@ function ocultarEccLogin() {
 if (formEccLogin) {
   formEccLogin.addEventListener('submit', (e) => {
     e.preventDefault();
-    const nome = eccLoginNome.value.trim();
+    const nome = eccLoginNome ? eccLoginNome.value.trim() : '';
     if (!nome) return;
+
+    const nomeCadastrado = getCasalRegistrado();
+
+    // If a couple is already registered on this device, enforce name match
+    if (nomeCadastrado) {
+      if (nome.toLowerCase() !== nomeCadastrado.toLowerCase()) {
+        if (eccLoginErro) {
+          eccLoginErro.textContent = 'Este dispositivo já está registrado para outro casal. Informe o nome correto ou contate o Dirigente.';
+          eccLoginErro.removeAttribute('hidden');
+        }
+        if (eccLoginNome) eccLoginNome.value = '';
+        return;
+      }
+      if (eccLoginErro) eccLoginErro.setAttribute('hidden', '');
+    } else {
+      // First login on this device – persist the couple name
+      setCasalRegistrado(nome);
+    }
 
     if (eccWelcomeMsg) {
       eccWelcomeMsg.textContent = `Bem-vindo(a), ${nome}! Que Deus abençoe o seu casal. ✝`;
@@ -678,6 +738,7 @@ if (btnSalvar) {
     if (!data) return;
 
     const idx = casais.findIndex((c) => c.id === data.id);
+    const isNovo = idx < 0;
     if (idx >= 0) {
       casais[idx] = data;
     } else {
@@ -691,6 +752,13 @@ if (btnSalvar) {
     sincronizarComSheets([data]).then((res) => {
       if (res && !res.ok) console.warn('Falha ao sincronizar casal com a planilha:', res.erro);
     });
+
+    // Lock further registrations on this device after a new couple is saved
+    // (only in the public view – admin panel is unrestricted)
+    if (isNovo && $('tbody-casais') && !$('tbody-dirigente')) {
+      bloquearInscricao();
+      atualizarEstadoBotaoCadastro();
+    }
   });
 }
 
@@ -821,9 +889,31 @@ if (tbodyDirEl) tbodyDirEl.addEventListener('click', handleRowAction);
 
 function abrirNovoCadastro() { resetForm(); abrirModal(modalCadastro); }
 
+function atualizarEstadoBotaoCadastro() {
+  if (!btnNovoCasal) return;
+  if (isInscricaoBloqueada()) {
+    btnNovoCasal.disabled = true;
+    btnNovoCasal.textContent = '✅ Inscrição Realizada';
+    btnNovoCasal.title = 'Inscrição já realizada. Para alterações, contate o Dirigente.';
+  } else {
+    btnNovoCasal.disabled = false;
+    btnNovoCasal.textContent = '📝 Ficha de Cadastro';
+    btnNovoCasal.title = '';
+  }
+}
+
 const btnNovoCasal   = $('btn-novo-casal');
 const btnAddCasalDir = $('btn-add-casal-dir');
-if (btnNovoCasal)   btnNovoCasal.addEventListener('click', abrirNovoCadastro);
+
+if (btnNovoCasal) {
+  btnNovoCasal.addEventListener('click', () => {
+    if (isInscricaoBloqueada()) {
+      alert('A inscrição deste dispositivo já foi realizada.\nPara alterações ou nova inscrição, contate o Dirigente.');
+      return;
+    }
+    abrirNovoCadastro();
+  });
+}
 if (btnAddCasalDir) btnAddCasalDir.addEventListener('click', abrirNovoCadastro);
 
 function abrirEdicao(casal) {
@@ -1144,6 +1234,49 @@ if (btnSincronizarTudo) {
 }
 
 /* ===================================================
+   ADMIN – DEVICE MANAGEMENT  (admin.html only)
+   =================================================== */
+
+function atualizarInfoDispositivo() {
+  const nomeEl   = $('nome-casal-registrado');
+  const statusEl = $('status-inscricao');
+  const nomeCadastrado = getCasalRegistrado();
+  const bloqueado      = isInscricaoBloqueada();
+
+  if (nomeEl) nomeEl.textContent = nomeCadastrado || 'Nenhum casal registrado';
+  if (statusEl) {
+    if (bloqueado) {
+      statusEl.textContent = 'Status: Inscrição concluída 🔒';
+      statusEl.className   = 'tool-desc dispositivo-bloqueado';
+    } else {
+      statusEl.textContent = 'Status: Livre para inscrição 🔓';
+      statusEl.className   = 'tool-desc dispositivo-livre';
+    }
+  }
+}
+
+const btnLiberarInscricao    = $('btn-liberar-inscricao');
+const btnRedefinirDispositivo = $('btn-redefinir-dispositivo');
+
+if (btnLiberarInscricao) {
+  btnLiberarInscricao.addEventListener('click', () => {
+    liberarInscricao();
+    atualizarInfoDispositivo();
+    alert('Inscrição liberada! O casal poderá realizar uma nova inscrição neste dispositivo.');
+  });
+}
+
+if (btnRedefinirDispositivo) {
+  btnRedefinirDispositivo.addEventListener('click', () => {
+    if (confirm('Atenção: isso removerá o vínculo deste dispositivo com o casal registrado, permitindo que qualquer casal se registre novamente.\n\nConfirmar redefinição?')) {
+      redefinirDispositivo();
+      atualizarInfoDispositivo();
+      alert('Dispositivo redefinido com sucesso. Um novo casal poderá se registrar.');
+    }
+  });
+}
+
+/* ===================================================
    INIT
    =================================================== */
 
@@ -1152,6 +1285,7 @@ carregar();
 // index.html init
 if ($('tbody-casais')) {
   renderTabela();
+  atualizarEstadoBotaoCadastro();
 
   if (isEccLogado()) {
     ocultarEccLogin();
@@ -1164,6 +1298,7 @@ if ($('tbody-casais')) {
 // admin.html init
 if ($('tbody-dirigente')) {
   renderTabelaDirigente(casais);
+  atualizarInfoDispositivo();
 
   if (isDirLogado()) {
     mostrarPainelDirigente();
