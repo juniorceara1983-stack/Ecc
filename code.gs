@@ -25,6 +25,7 @@ var SHEET_ID = '1o9h8x2mmifnHjJINmPL0Y5HgXsEDxRaP53sA_hBnfMY';
 var ABA_CASAIS    = 'Casais';
 var ABA_SUGESTOES = 'Sugestões Retiro';
 var ABA_BLOQUEIOS = 'Logins Bloqueados';
+var ABA_CONFIG    = 'Configurações';
 
 // Cabeçalho da aba principal
 var CABECALHO_CASAIS = [
@@ -84,6 +85,37 @@ function casalParaLinha(c) {
     (c.gostariaDeServir || []).join('; '),
     new Date().toLocaleString('pt-BR'),
   ];
+}
+
+// Cabeçalho da aba de configurações
+var CABECALHO_CONFIG = ['Chave', 'Valor', 'Data'];
+
+// ── Helpers de configurações ─────────────────────────────────────────────────
+
+function getConfigSheet(ss) {
+  return getOrCreateSheet(ss, ABA_CONFIG, CABECALHO_CONFIG);
+}
+
+function salvarConfiguracao(sheet, chave, valor) {
+  var dados = sheet.getDataRange().getValues();
+  for (var i = 1; i < dados.length; i++) {
+    if (String(dados[i][0]).trim() === String(chave).trim()) {
+      sheet.getRange(i + 1, 2).setValue(valor);
+      sheet.getRange(i + 1, 3).setValue(new Date());
+      return;
+    }
+  }
+  sheet.appendRow([chave, valor, new Date()]);
+}
+
+function getConfiguracao(sheet, chave) {
+  var dados = sheet.getDataRange().getValues();
+  for (var i = 1; i < dados.length; i++) {
+    if (String(dados[i][0]).trim() === String(chave).trim()) {
+      return String(dados[i][1] || '');
+    }
+  }
+  return '';
 }
 
 // ── Helpers de bloqueios ──────────────────────────────────────────────────────
@@ -159,6 +191,9 @@ function doPost(e) {
     } else if (acao === 'desbloquearLogin' && payload.login) {
       var sheetBloqueios = getBloqueiosSheet(ss);
       desbloquearLoginNaPlanilha(sheetBloqueios, payload.login);
+    } else if (acao === 'salvarConfig' && payload.chave) {
+      var sheetConf = getConfigSheet(ss);
+      salvarConfiguracao(sheetConf, payload.chave, payload.valor || '');
     }
 
     return ContentService
@@ -211,6 +246,15 @@ function doGet(e) {
       var bloqueios = listarTodosBloqueios(sheetBloqueios);
       return ContentService
         .createTextOutput(JSON.stringify({ ok: true, bloqueios: bloqueios }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (acao === 'getConfig') {
+      var chave = params.chave || '';
+      var sheetConf = getConfigSheet(ss);
+      var valor = getConfiguracao(sheetConf, chave);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, valor: valor }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 

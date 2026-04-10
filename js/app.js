@@ -210,6 +210,21 @@ async function listarBloqueiosDoSheets() {
   }
 }
 
+async function salvarSenhaNoSheets(senha) {
+  return _postParaSheets({ acao: 'salvarConfig', chave: 'senha_admin', valor: senha });
+}
+
+async function carregarSenhaDoSheets() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?acao=getConfig&chave=senha_admin`, { redirect: 'follow' });
+    const data = await res.json();
+    return data.ok && data.valor ? data.valor : null;
+  } catch (err) {
+    console.warn('Erro ao carregar senha do Sheets:', err);
+    return null;
+  }
+}
+
 // Mapeia uma linha exportada da planilha para o formato local
 function casalDaPlanilha(row) {
   const jaServiu = row['Já Serviu'] === 'Sim';
@@ -433,6 +448,10 @@ if (formDirLogin) {
       setDirLogado();
       ocultarDirLogin();
       mostrarPainelDirigente();
+      renderListaBloqueios();
+      if (casais.length === 0) {
+        _autoImportarDoSheets();
+      }
     } else {
       if (dirLoginErro) dirLoginErro.removeAttribute('hidden');
       if (dirLoginSenha) { dirLoginSenha.value = ''; dirLoginSenha.focus(); }
@@ -477,6 +496,7 @@ if (formMudarSenha) {
     }
 
     setSenha(nova);
+    salvarSenhaNoSheets(nova).catch((err) => console.warn('Erro ao salvar senha no Sheets:', err));
     if (mudarSenhaMsg) { mudarSenhaMsg.textContent = 'Senha alterada com sucesso!'; mudarSenhaMsg.classList.add('msg-ok'); }
     if (senhaAtualInput) senhaAtualInput.value = '';
     if (senhaNoveInput)  senhaNoveInput.value  = '';
@@ -1353,42 +1373,7 @@ function _setSheetsMsg(msg, tipo) {
   }
 }
 
-const btnImportarSheets  = $('btn-importar-sheets');
 const btnSincronizarTudo = $('btn-sincronizar-tudo');
-
-if (btnImportarSheets) {
-  btnImportarSheets.addEventListener('click', async () => {
-    _setSheetsMsg('Importando da planilha…', 'loading');
-    btnImportarSheets.disabled = true;
-    const linhas = await importarDoSheets();
-    btnImportarSheets.disabled = false;
-    if (!linhas) {
-      _setSheetsMsg('Erro ao importar. Verifique a conexão e as permissões.', 'erro');
-      return;
-    }
-    if (linhas.length === 0) {
-      _setSheetsMsg('A planilha está vazia.', 'ok');
-      return;
-    }
-    // Merge: spreadsheet data wins for existing IDs; local-only entries are preserved
-    const mapaLocal = {};
-    casais.forEach((c) => { mapaLocal[c.id] = c; });
-    linhas.forEach((row) => {
-      const c = casalDaPlanilha(row);
-      // Preserve local photos if we already have the couple
-      if (mapaLocal[c.id]) {
-        c.fotoEsposo = mapaLocal[c.id].fotoEsposo || null;
-        c.fotoEsposa = mapaLocal[c.id].fotoEsposa || null;
-      }
-      mapaLocal[c.id] = c;
-    });
-    casais = Object.values(mapaLocal);
-    salvar();
-    renderTabela();
-    renderTabelaDirigente(aplicarFiltrosAtivos());
-    _setSheetsMsg(`${linhas.length} casal(is) importado(s) com sucesso!`, 'ok');
-  });
-}
 
 if (btnSincronizarTudo) {
   btnSincronizarTudo.addEventListener('click', async () => {
@@ -1547,12 +1532,52 @@ if ($('tbody-casais')) {
 // admin.html init
 if ($('tbody-dirigente')) {
   renderTabelaDirigente(casais);
-  atualizarInfoDispositivo();
 
-  if (isDirLogado()) {
-    mostrarPainelDirigente();
-    renderListaBloqueios();
-  } else {
-    mostrarDirLogin();
+  // Load persisted admin password from Google Sheets (survives cache clear / reinstall)
+  carregarSenhaDoSheets().then((senhaSalva) => {
+    if (senhaSalva) setSenha(senhaSalva);
+
+    if (isDirLogado()) {
+      mostrarPainelDirigente();
+      renderListaBloqueios();
+      // Auto-fetch couples from Google Sheets if local cache is empty
+      if (casais.length === 0) {
+        _autoImportarDoSheets();
+      }
+    } else {
+      mostrarDirLogin();
+    }
+  }).catch((err) => {
+    console.warn('Erro ao carregar senha do Sheets:', err);
+    if (isDirLogado()) {
+      mostrarPainelDirigente();
+      renderListaBloqueios();
+      if (casais.length === 0) {
+        _autoImportarDoSheets();
+      }
+    } else {
+      mostrarDirLogin();
+    }
+  });
+}
+
+async function _autoImportarDoSheets() {
+  const linhas = await importarDoSheets();
+  if (!linhas || linhas.length === 0) {
+    if (!linhas) console.warn('Auto-importação: falha ao buscar dados da planilha.');
+    return;
   }
+  const mapaLocal = {};
+  casais.forEach((c) => { mapaLocal[c.id] = c; });
+  linhas.forEach((row) => {
+    const c = casalDaPlanilha(row);
+    if (mapaLocal[c.id]) {
+      c.fotoEsposo = mapaLocal[c.id].fotoEsposo || null;
+      c.fotoEsposa = mapaLocal[c.id].fotoEsposa || null;
+    }
+    mapaLocal[c.id] = c;
+  });
+  casais = Object.values(mapaLocal);
+  salvar();
+  renderTabelaDirigente(aplicarFiltrosAtivos());
 }
