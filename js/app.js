@@ -1701,6 +1701,12 @@ function renderComunicadosAdmin() {
    COMUNICADOS — RENDER (Public)
    =================================================== */
 
+function addHourToTime(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  return String((h + 1) % 24).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
 function formatGCalDate(dateStr, timeStr) {
   if (!dateStr) return '';
   const d = dateStr.replace(/-/g, '');
@@ -1729,7 +1735,7 @@ function renderComunicadosPub() {
       ? `<img src="${com.imagem}" class="comunicado-card-img" alt="${esc(com.titulo)}" />`
       : `<div class="comunicado-card-img-placeholder">📢</div>`;
     const startDate = formatGCalDate(com.dataEvento, com.horaEvento);
-    const endDate   = formatGCalDate(com.dataEvento, com.horaEvento ? (parseInt(com.horaEvento.split(':')[0], 10) + 1) + ':' + com.horaEvento.split(':')[1] : '');
+    const endDate   = formatGCalDate(com.dataEvento, addHourToTime(com.horaEvento));
     const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(com.titulo)}&dates=${startDate}/${endDate}&details=${encodeURIComponent(com.descricao)}&location=${encodeURIComponent(com.local || '')}`;
     return `
       <div class="comunicado-card">
@@ -1865,7 +1871,7 @@ const QUIZ_QUESTIONS = [
   { id: 'b22', categoria: 'Bíblia', pergunta: 'Qual foi a última praga do Egito?', opcoes: ['Gafanhotos','Água em sangue','Morte dos primogênitos','Trevas'], correta: 2 },
   { id: 'b23', categoria: 'Bíblia', pergunta: 'Quem escreveu a maioria das cartas do Novo Testamento?', opcoes: ['Pedro','Paulo','João','Tiago'], correta: 1 },
   { id: 'b24', categoria: 'Bíblia', pergunta: 'Qual é o nome do discípulo que duvidou da ressurreição de Jesus?', opcoes: ['Bartolomeu','Filipe','Simão','Tomé'], correta: 3 },
-  { id: 'b25', categoria: 'Bíblia', pergunta: 'Quantos anos durou o dilúvio?', opcoes: ['40 dias e 40 noites','1 ano','7 dias','150 dias'], correta: 0 },
+  { id: 'b25', categoria: 'Bíblia', pergunta: 'Por quantos dias e noites Deus fez chover sobre a terra durante o dilúvio?', opcoes: ['40 dias e 40 noites','7 dias e 7 noites','20 dias e 20 noites','100 dias e 100 noites'], correta: 0 },
   { id: 'b26', categoria: 'Bíblia', pergunta: 'Qual profeta anunciou: "Eis que a virgem conceberá e dará à luz um filho"?', opcoes: ['Jeremias','Ezequiel','Isaías','Daniel'], correta: 2 },
   { id: 'b27', categoria: 'Bíblia', pergunta: 'Em qual monte Moisés recebeu os Dez Mandamentos?', opcoes: ['Monte Carmelo','Monte Sinai','Monte Tabor','Monte das Oliveiras'], correta: 1 },
   { id: 'b28', categoria: 'Bíblia', pergunta: 'Qual é o Salmo mais conhecido da Bíblia?', opcoes: ['Salmo 1','Salmo 100','Salmo 23','Salmo 119'], correta: 2 },
@@ -2209,8 +2215,13 @@ function initQuizData() {
 function selectDailyQuestions(data) {
   const allIds = QUIZ_QUESTIONS.map((q) => q.id);
   const available = allIds.filter((id) => !data.history.includes(id));
-  const pool = available.length >= 10 ? available : allIds; // reset when exhausted
-  const shuffled = pool.slice().sort(() => Math.random() - 0.5);
+  // When pool exhausted, reset history so questions cycle again
+  if (available.length < 10) {
+    data.history = [];
+    const shuffled = allIds.slice().sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 10).map((id) => QUIZ_QUESTIONS.find((q) => q.id === id));
+  }
+  const shuffled = available.slice().sort(() => Math.random() - 0.5);
   return shuffled.slice(0, 10).map((id) => QUIZ_QUESTIONS.find((q) => q.id === id));
 }
 
@@ -2488,9 +2499,9 @@ if (btnBaixarRankingQuiz) {
     const rows = ranking.map((item, i) => `
       <tr>
         <td style="text-align:center;font-size:1.2rem;">${i < 3 ? medals[i] : (i+1)+'°'}</td>
-        <td>${item.login}</td>
-        <td style="text-align:center;font-weight:700;color:#7b2d8b;">${item.pontuacao}</td>
-        <td style="text-align:center;">${item.totalRespondidas}</td>
+        <td>${esc(String(item.login || ''))}</td>
+        <td style="text-align:center;font-weight:700;color:#7b2d8b;">${Number(item.pontuacao) || 0}</td>
+        <td style="text-align:center;">${Number(item.totalRespondidas) || 0}</td>
       </tr>`).join('');
     win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
       <title>Ranking Quiz ECC — ${mes}</title>
