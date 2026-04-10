@@ -36,6 +36,30 @@ const STORAGE_KEY  = 'ecc_casais';
 const SENHA_KEY    = 'ecc_dir_senha';
 const SENHA_PADRAO = 'ecc2024';
 
+// Frases inspiradoras exibidas no login (santos e bíblicas)
+const FRASES_INSPIRADORAS = [
+  '"Tudo posso naquele que me fortalece." — Fil 4,13',
+  '"Deus é amor, e quem permanece no amor permanece em Deus." — 1 Jo 4,16',
+  '"O Senhor é meu pastor e nada me faltará." — Sl 23,1',
+  '"Amai-vos uns aos outros como Eu vos amei." — Jo 15,12',
+  '"Que a paz de Cristo reine em vossos corações." — Cl 3,15',
+  '"São José, guardião da Sagrada Família, rogai por nós."',
+  '"A família que ora unida permanece unida." — Beato Pe. Patrick Peyton',
+  '"O amor é paciente, o amor é bondoso." — 1 Cor 13,4',
+  '"Onde há caridade e amor, aí está Deus." — Antífona Litúrgica',
+  '"Feliz o povo que tem o Senhor como seu Deus." — Sl 33,12',
+  '"Buscai primeiro o Reino de Deus e a sua justiça." — Mt 6,33',
+  '"Com Deus tudo, sem Deus nada." — Santo Agostinho',
+  '"Amar é querer o bem do outro." — Santo Tomás de Aquino',
+  '"A oração é a respiração da alma." — São João Vianney',
+  '"Não temas, pois Eu estou contigo." — Is 41,10',
+  '"Sede a luz do mundo, a cidade posta no monte." — Mt 5,14',
+  '"Nossa Senhora do Perpétuo Socorro, rogai por nós."',
+  '"São Francisco de Sales, patrono dos casais, rogai por nós."',
+  '"O amor conjugal é imagem do amor de Deus pela humanidade." — Familiaris Consortio',
+  '"Quanto fizestes a um destes meus pequeninos irmãos, a Mim o fizestes." — Mt 25,40',
+];
+
 // URL do Google Apps Script implantado
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYIU9U7PUjAHpxxWeEla8-vrK_pP2iTZg41858yw_2SE8usnUqtk8l6KRwbxX8P71mrw/exec';
 
@@ -156,6 +180,36 @@ async function importarDoSheets() {
   }
 }
 
+async function verificarBloqueioNoSheets(login) {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?acao=verificarBloqueio&login=${encodeURIComponent(login)}`, { redirect: 'follow' });
+    const data = await res.json();
+    return data.ok ? !!data.bloqueado : false;
+  } catch (err) {
+    console.warn('Erro ao verificar bloqueio:', err);
+    return false;
+  }
+}
+
+async function bloquearLoginNoSheets(login) {
+  return _postParaSheets({ acao: 'bloquearLogin', login });
+}
+
+async function desbloquearLoginNoSheets(login) {
+  return _postParaSheets({ acao: 'desbloquearLogin', login });
+}
+
+async function listarBloqueiosDoSheets() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?acao=listarBloqueios`, { redirect: 'follow' });
+    const data = await res.json();
+    return data.ok && Array.isArray(data.bloqueios) ? data.bloqueios : [];
+  } catch (err) {
+    console.warn('Erro ao listar bloqueios:', err);
+    return [];
+  }
+}
+
 // Mapeia uma linha exportada da planilha para o formato local
 function casalDaPlanilha(row) {
   const jaServiu = row['Já Serviu'] === 'Sim';
@@ -203,6 +257,19 @@ function casalDaPlanilha(row) {
 const $ = (id) => document.getElementById(id);
 
 /* ===================================================
+   INSPIRATIONAL PHRASES
+   =================================================== */
+
+function getFraseAleatoria() {
+  return FRASES_INSPIRADORAS[Math.floor(Math.random() * FRASES_INSPIRADORAS.length)];
+}
+
+function mostrarFraseNoLogin(idElemento) {
+  const el = $(idElemento);
+  if (el) el.textContent = getFraseAleatoria();
+}
+
+/* ===================================================
    SESSION AUTH HELPERS
    =================================================== */
 
@@ -241,6 +308,7 @@ function mostrarEccLogin() {
   if (overlayEccLogin) {
     overlayEccLogin.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
+    mostrarFraseNoLogin('frase-inspiradora');
 
     // Pre-fill name if device already has a registered couple
     const nomeCadastrado = getCasalRegistrado();
@@ -259,6 +327,12 @@ function ocultarEccLogin() {
     overlayEccLogin.setAttribute('hidden', '');
     document.body.style.overflow = '';
   }
+}
+
+function atualizarNomeLogado(nome) {
+  if (!eccNomeLogado || !nome) return;
+  const lockIcon = isInscricaoBloqueada() ? ' 🔒' : '';
+  eccNomeLogado.textContent = `Olá, ${nome}!${lockIcon}`;
 }
 
 if (formEccLogin) {
@@ -292,7 +366,21 @@ if (formEccLogin) {
     formEccLogin.hidden = true;
 
     setEccLogado(nome);
-    if (eccNomeLogado) eccNomeLogado.textContent = `Olá, ${nome}!`;
+    atualizarNomeLogado(nome);
+
+    // Sync block status from Google Sheets (source of truth)
+    // This ensures the block persists even after cache clear / app reinstall
+    verificarBloqueioNoSheets(nome).then((bloqueadoSheets) => {
+      if (bloqueadoSheets) {
+        bloquearInscricao();
+      } else {
+        liberarInscricao();
+      }
+      atualizarEstadoBotaoCadastro();
+      atualizarNomeLogado(nome);
+    }).catch((err) => {
+      console.warn('Não foi possível sincronizar status de bloqueio:', err);
+    });
 
     setTimeout(() => {
       ocultarEccLogin();
@@ -318,6 +406,7 @@ function mostrarDirLogin() {
   if (overlayDirLogin) {
     overlayDirLogin.removeAttribute('hidden');
     document.body.style.overflow = 'hidden';
+    mostrarFraseNoLogin('frase-admin');
     if (dirLoginErro) dirLoginErro.setAttribute('hidden', '');
     if (dirLoginSenha) { dirLoginSenha.value = ''; dirLoginSenha.focus(); }
   }
@@ -769,6 +858,13 @@ if (btnSalvar) {
       bloquearInscricao();
       setCasalId(data.id);
       atualizarEstadoBotaoCadastro();
+      // Persist block in Google Sheets so it survives cache clear / app reinstall
+      const nomeRegistrado = getCasalRegistrado();
+      if (nomeRegistrado) {
+        bloquearLoginNoSheets(nomeRegistrado).catch((err) => console.warn('Erro ao bloquear login no Sheets:', err));
+      }
+      const nomeLogado = sessionStorage.getItem('ecc_casal_nome');
+      if (nomeLogado) atualizarNomeLogado(nomeLogado);
     }
   });
 }
@@ -1338,10 +1434,16 @@ const btnLiberarInscricao    = $('btn-liberar-inscricao');
 const btnRedefinirDispositivo = $('btn-redefinir-dispositivo');
 
 if (btnLiberarInscricao) {
-  btnLiberarInscricao.addEventListener('click', () => {
+  btnLiberarInscricao.addEventListener('click', async () => {
+    const nome = getCasalRegistrado();
     liberarInscricao();
     atualizarInfoDispositivo();
-    alert('Inscrição liberada! O casal poderá realizar uma nova inscrição neste dispositivo.');
+    if (nome) {
+      btnLiberarInscricao.disabled = true;
+      await desbloquearLoginNoSheets(nome).catch((err) => console.warn('Erro ao desbloquear no Sheets:', err));
+      btnLiberarInscricao.disabled = false;
+    }
+    alert('Inscrição liberada! O casal poderá realizar uma nova inscrição.');
   });
 }
 
@@ -1352,6 +1454,73 @@ if (btnRedefinirDispositivo) {
       atualizarInfoDispositivo();
       alert('Dispositivo redefinido com sucesso. Um novo casal poderá se registrar.');
     }
+  });
+}
+
+/* ===================================================
+   ADMIN – BLOCK MANAGEMENT  (admin.html only)
+   =================================================== */
+
+async function renderListaBloqueios() {
+  const listEl = $('lista-bloqueios');
+  if (!listEl) return;
+  listEl.innerHTML = '<p class="tool-desc">Carregando…</p>';
+  const bloqueios = await listarBloqueiosDoSheets();
+  if (!bloqueios.length) {
+    listEl.innerHTML = '<p class="tool-desc">Nenhum login registrado na planilha.</p>';
+    return;
+  }
+  listEl.innerHTML = '';
+  bloqueios.forEach((b) => {
+    const item = document.createElement('div');
+    item.className = `bloqueio-item ${b.bloqueado ? 'bloqueio-bloqueado' : 'bloqueio-livre'}`;
+    item.innerHTML = `
+      <span class="bloqueio-nome">${esc(b.login)}</span>
+      <span class="badge ${b.bloqueado ? 'badge-bloqueado' : 'badge-livre'}">${b.bloqueado ? '🔒 Bloqueado' : '🔓 Livre'}</span>
+      <button class="btn btn-sm ${b.bloqueado ? 'btn-outline' : 'btn-danger'}"
+              data-bloqueio-acao="${b.bloqueado ? 'desbloquear' : 'bloquear'}"
+              data-bloqueio-login="${esc(b.login)}">
+        ${b.bloqueado ? '🔓 Liberar' : '🔒 Bloquear'}
+      </button>`;
+    listEl.appendChild(item);
+  });
+}
+
+const listaBloqueiosEl    = $('lista-bloqueios');
+const btnCarregarBloqueios = $('btn-carregar-bloqueios');
+const btnBloquearLogin    = $('btn-bloquear-login');
+const bloquearLoginInput  = $('bloquear-login-input');
+
+if (listaBloqueiosEl) {
+  listaBloqueiosEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-bloqueio-acao]');
+    if (!btn) return;
+    const acao  = btn.dataset.bloqueioAcao;
+    const login = btn.dataset.bloqueioLogin;
+    btn.disabled = true;
+    if (acao === 'desbloquear') {
+      await desbloquearLoginNoSheets(login).catch(() => {});
+    } else {
+      await bloquearLoginNoSheets(login).catch(() => {});
+    }
+    await renderListaBloqueios();
+  });
+}
+
+if (btnCarregarBloqueios) {
+  btnCarregarBloqueios.addEventListener('click', () => renderListaBloqueios());
+}
+
+if (btnBloquearLogin && bloquearLoginInput) {
+  btnBloquearLogin.addEventListener('click', async () => {
+    const nome = bloquearLoginInput.value.trim();
+    if (!nome) { alert('Informe o nome do casal.'); return; }
+    btnBloquearLogin.disabled = true;
+    await bloquearLoginNoSheets(nome).catch(() => {});
+    bloquearLoginInput.value = '';
+    btnBloquearLogin.disabled = false;
+    await renderListaBloqueios();
+    alert(`Login "${nome}" bloqueado com sucesso.`);
   });
 }
 
@@ -1368,7 +1537,8 @@ if ($('tbody-casais')) {
 
   if (isEccLogado()) {
     ocultarEccLogin();
-    if (eccNomeLogado) eccNomeLogado.textContent = `Olá, ${sessionStorage.getItem('ecc_casal_nome')}!`;
+    const nomeLogado = sessionStorage.getItem('ecc_casal_nome');
+    atualizarNomeLogado(nomeLogado || '');
   } else {
     mostrarEccLogin();
   }
@@ -1381,6 +1551,7 @@ if ($('tbody-dirigente')) {
 
   if (isDirLogado()) {
     mostrarPainelDirigente();
+    renderListaBloqueios();
   } else {
     mostrarDirLogin();
   }

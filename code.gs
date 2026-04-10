@@ -24,6 +24,7 @@ var SHEET_ID = '1o9h8x2mmifnHjJINmPL0Y5HgXsEDxRaP53sA_hBnfMY';
 // Nomes das abas
 var ABA_CASAIS    = 'Casais';
 var ABA_SUGESTOES = 'Sugestões Retiro';
+var ABA_BLOQUEIOS = 'Logins Bloqueados';
 
 // Cabeçalho da aba principal
 var CABECALHO_CASAIS = [
@@ -34,6 +35,9 @@ var CABECALHO_CASAIS = [
   'Pastoral', 'Gostaria de Servir em',
   'Última Atualização',
 ];
+
+// Cabeçalho da aba de bloqueios
+var CABECALHO_BLOQUEIOS = ['Login', 'Bloqueado', 'Data'];
 
 // Índices das colunas (0-based), derivados do cabeçalho para evitar fragilidade
 var COL_ID        = CABECALHO_CASAIS.indexOf('ID');
@@ -82,6 +86,53 @@ function casalParaLinha(c) {
   ];
 }
 
+// ── Helpers de bloqueios ──────────────────────────────────────────────────────
+
+function getBloqueiosSheet(ss) {
+  return getOrCreateSheet(ss, ABA_BLOQUEIOS, CABECALHO_BLOQUEIOS);
+}
+
+function verificarLoginBloqueado(sheet, login) {
+  var dados = sheet.getDataRange().getValues();
+  for (var i = 1; i < dados.length; i++) {
+    if (String(dados[i][0]).trim().toLowerCase() === String(login).trim().toLowerCase()) {
+      return dados[i][1] === 'Sim';
+    }
+  }
+  return false;
+}
+
+function bloquearLoginNaPlanilha(sheet, login) {
+  var dados = sheet.getDataRange().getValues();
+  for (var i = 1; i < dados.length; i++) {
+    if (String(dados[i][0]).trim().toLowerCase() === String(login).trim().toLowerCase()) {
+      sheet.getRange(i + 1, 2).setValue('Sim');
+      sheet.getRange(i + 1, 3).setValue(new Date().toLocaleString('pt-BR'));
+      return;
+    }
+  }
+  sheet.appendRow([login, 'Sim', new Date().toLocaleString('pt-BR')]);
+}
+
+function desbloquearLoginNaPlanilha(sheet, login) {
+  var dados = sheet.getDataRange().getValues();
+  for (var i = 1; i < dados.length; i++) {
+    if (String(dados[i][0]).trim().toLowerCase() === String(login).trim().toLowerCase()) {
+      sheet.getRange(i + 1, 2).setValue('Não');
+      sheet.getRange(i + 1, 3).setValue(new Date().toLocaleString('pt-BR'));
+      return;
+    }
+  }
+}
+
+function listarTodosBloqueios(sheet) {
+  var dados = sheet.getDataRange().getValues();
+  if (dados.length <= 1) return [];
+  return dados.slice(1).map(function(row) {
+    return { login: String(row[0] || ''), bloqueado: row[1] === 'Sim', data: String(row[2] || '') };
+  });
+}
+
 // ── doPost – recebe dados do app ──────────────────────────────────────────────
 
 function doPost(e) {
@@ -102,6 +153,12 @@ function doPost(e) {
       sincronizarCasais(sheetCas, casais);
     } else if (acao === 'excluir' && payload.id) {
       excluirCasal(sheetCas, payload.id);
+    } else if (acao === 'bloquearLogin' && payload.login) {
+      var sheetBloq = getBloqueiosSheet(ss);
+      bloquearLoginNaPlanilha(sheetBloq, payload.login);
+    } else if (acao === 'desbloquearLogin' && payload.login) {
+      var sheetBloqueios = getBloqueiosSheet(ss);
+      desbloquearLoginNaPlanilha(sheetBloqueios, payload.login);
     }
 
     return ContentService
@@ -137,6 +194,23 @@ function doGet(e) {
       var sugest = gerarSugestoes(sheetCas, pasta);
       return ContentService
         .createTextOutput(JSON.stringify({ ok: true, sugestoes: sugest }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (acao === 'verificarBloqueio') {
+      var login = params.login || '';
+      var sheetBloq = getBloqueiosSheet(ss);
+      var bloqueado = verificarLoginBloqueado(sheetBloq, login);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, bloqueado: bloqueado }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (acao === 'listarBloqueios') {
+      var sheetBloqueios = getBloqueiosSheet(ss);
+      var bloqueios = listarTodosBloqueios(sheetBloqueios);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, bloqueios: bloqueios }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
