@@ -42,24 +42,26 @@
     </div>
 
     <div class="dirigente-tools">
-      <div class="tool-card highlight">
-        <h3>🚀 Ajuda para Formar Retiro</h3>
-        <p class="tool-desc">Selecione uma pasta para ver casais sugeridos (que nunca serviram nela):</p>
-        <select id="sugestao-pasta" class="form-control">
-          <option value="">Selecione uma pasta...</option>
-        </select>
-        <button id="btn-ajuda-retiro" class="btn btn-accent btn-block">Sugerir Casais</button>
-        <button id="btn-nunca-serviram" class="btn btn-outline btn-block">👥 Casais que Nunca Serviram</button>
-        <button id="btn-baixar-sugestao" class="btn btn-outline btn-block">📄 Baixar PDF da Sugestão</button>
-      </div>
+      <div class="tools-column">
+        <div class="tool-card highlight">
+          <h3>🚀 Ajuda para Formar Retiro</h3>
+          <p class="tool-desc">Selecione uma pasta para ver casais sugeridos (que nunca serviram nela):</p>
+          <select id="sugestao-pasta" class="form-control">
+            <option value="">Selecione uma pasta...</option>
+          </select>
+          <button id="btn-ajuda-retiro" class="btn btn-accent btn-block">Sugerir Casais</button>
+          <button id="btn-nunca-serviram" class="btn btn-outline btn-block">👥 Casais que Nunca Serviram</button>
+          <button id="btn-baixar-sugestao" class="btn btn-outline btn-block">📄 Baixar PDF da Sugestão</button>
+        </div>
 
-      <div class="tool-card">
-        <h3>Buscar</h3>
-        <input type="text" id="busca-nome" class="form-control" placeholder="Nome do casal..." />
-        <input type="number" id="busca-ano" class="form-control mt-half" placeholder="Ano do retiro..." min="1980" max="2099" />
-        <span id="label-filtro-ativo" class="label-filtro-ativo"></span>
-        <button id="btn-buscar" class="btn btn-secondary btn-block">Filtrar</button>
-        <button id="btn-limpar-busca" class="btn btn-outline btn-block">Limpar</button>
+        <div class="tool-card">
+          <h3>Buscar</h3>
+          <input type="text" id="busca-nome" class="form-control" placeholder="Nome do casal..." />
+          <input type="number" id="busca-ano" class="form-control mt-half" placeholder="Ano do retiro..." min="1980" max="2099" />
+          <span id="label-filtro-ativo" class="label-filtro-ativo"></span>
+          <button id="btn-buscar" class="btn btn-secondary btn-block">Filtrar</button>
+          <button id="btn-limpar-busca" class="btn btn-outline btn-block">Limpar</button>
+        </div>
       </div>
 
       <div class="tool-card">
@@ -72,17 +74,8 @@
       <div class="tool-card">
         <h3>☁️ Google Sheets</h3>
         <p class="tool-desc">Sincronize os dados com a planilha vinculada.</p>
-        <button id="btn-importar-sheets" class="btn btn-secondary btn-block">📥 Importar da Planilha</button>
-        <button id="btn-sincronizar-tudo" class="btn btn-outline btn-block">🔄 Sincronizar Tudo</button>
+        <button id="btn-sincronizar-tudo" class="btn btn-accent btn-block">🔄 Sincronizar Tudo</button>
         <p id="sheets-msg" class="sheets-msg" hidden></p>
-      </div>
-
-      <div class="tool-card">
-        <h3>📱 Gerenciar Dispositivo</h3>
-        <p class="tool-desc">Casal registrado: <strong id="nome-casal-registrado">—</strong></p>
-        <p id="status-inscricao" class="tool-desc"></p>
-        <button id="btn-liberar-inscricao" class="btn btn-secondary btn-block">🔓 Liberar Inscrição</button>
-        <button id="btn-redefinir-dispositivo" class="btn btn-outline btn-block">🔄 Redefinir Dispositivo</button>
       </div>
 
       <div class="tool-card">
