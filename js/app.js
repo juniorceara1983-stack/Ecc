@@ -37,7 +37,7 @@ const SENHA_KEY    = 'ecc_dir_senha';
 const SENHA_PADRAO = 'ecc2024';
 
 // URL do Google Apps Script implantado
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiXzfMNlhqrGUmaIWbOm5zEj7cnK1XdgWPdmqPbFQtXKouPM0GlFJBSiVLisbd0YbD/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYIU9U7PUjAHpxxWeEla8-vrK_pP2iTZg41858yw_2SE8usnUqtk8l6KRwbxX8P71mrw/exec';
 
 /* ===================================================
    STATE
