@@ -320,8 +320,8 @@ function mostrarLoadingScreen(duracao, callback) {
       setTimeout(() => {
         el.setAttribute('hidden', '');
         document.body.style.overflow = '';
-        const cruzEl2 = $('loading-cruz-elem');
-        if (cruzEl2) cruzEl2.classList.remove('loading-cruz-atravessar');
+        const cruzElCleanup = $('loading-cruz-elem');
+        if (cruzElCleanup) cruzElCleanup.classList.remove('loading-cruz-atravessar');
         if (callback) callback();
       }, 500);
     }, 700);
