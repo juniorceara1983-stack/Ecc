@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Fé Conectada - Entrada</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        #loading-ui {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        h1 { color: #5DADE2; font-weight: 300; letter-spacing: 2px; font-size: 2rem; }
+
+        #container-barra { width: 250px; height: 4px; background: #f0f0f0; border-radius: 2px; overflow: hidden; margin-top: 20px; }
+        #barra { width: 0%; height: 100%; background: #5DADE2; transition: width 0.1s linear; }
+
+        /* Container da Cruz - Centralizado Absoluto */
+        #cross-wrapper {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Cruz Católica Fina e perfeitamente centrada */
+        .cruz-catolica {
+            position: relative;
+            width: 12px;
+            height: 140px;
+            background-color: #5DADE2;
+            opacity: 0;
+        }
+        
+        /* Braço horizontal - Centralizado na haste */
+        .cruz-catolica::after {
+            content: '';
+            position: absolute;
+            width: 70px;
+            height: 12px;
+            background-color: #5DADE2;
+            top: 35px; /* Ponto de intersecção */
+            left: -29px; /* (70-12)/2 = 29 para centralizar */
+        }
+
+        /* Animação que faz a cruz "atravessar" a tela a partir do centro */
+        .animar-atravessar {
+            animation: atravessar 2.5s cubic-bezier(0.55, 0.05, 0.67, 0.19) forwards;
+        }
+
+        @keyframes atravessar {
+            0% { opacity: 0; transform: scale(0.1); }
+            30% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(60); } /* Expansão total até sumir */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-ui">
+        <h1>Fé Conectada</h1>
+        <div id="container-barra"><div id="barra"></div></div>
+    </div>
+
+    <div id="cross-wrapper">
+        <div class="cruz-catolica" id="cruz"></div>
+    </div>
+
+    <script>
+        let progresso = 0;
+        const barra = document.getElementById('barra');
+        const ui = document.getElementById('loading-ui');
+        const cruz = document.getElementById('cruz');
+
+        const carregar = setInterval(() => {
+            progresso++;
+            barra.style.width = progresso + "%";
+            
+            if (progresso >= 100) {
+                clearInterval(carregar);
+                ui.style.opacity = "0"; 
+                
+                setTimeout(() => {
+                    ui.style.display = "none";
+                    cruz.style.opacity = "1";
+                    cruz.classList.add('animar-atravessar');
+                }, 500);
+            }
+        }, 30);
+    </script>
+</body>
+</html>
