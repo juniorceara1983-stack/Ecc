@@ -62,6 +62,14 @@
             </select>
             <button id="btn-ajuda-retiro" class="btn btn-accent btn-block">Sugerir Casais</button>
             <button id="btn-nunca-serviram" class="btn btn-outline btn-block">👥 Casais que Nunca Serviram</button>
+            <div class="nunca-serviu-filter-group">
+              <p class="form-label">Filtrar por pasta de interesse:</p>
+              <select id="nunca-serviu-pasta-select" class="form-control">
+                <option value="">Todas as pastas</option>
+              </select>
+              <button id="btn-nunca-serviram-filtrar" class="btn btn-secondary btn-block">🔍 Filtrar por Interesse</button>
+              <button id="btn-baixar-nunca-serviram" class="btn btn-outline btn-block">📄 Baixar PDF (Nunca Serviram)</button>
+            </div>
             <button id="btn-baixar-sugestao" class="btn btn-outline btn-block">📄 Baixar PDF da Sugestão</button>
           </div>
 
@@ -317,6 +325,16 @@
       <div class="modal-footer">
         <button id="btn-fechar-view2" class="btn btn-outline">Fechar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== LOADING SCREEN ===== -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-content">
+      <div class="loading-cross">✝</div>
+      <div class="loading-spinner"></div>
+      <p id="loading-frase" class="loading-frase">"A oração é a respiração da alma." — São João Vianney</p>
+      <p class="loading-brand">ECC – Painel do Dirigente</p>
     </div>
   </div>
 
