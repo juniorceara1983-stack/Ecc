@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ECC – Encontro de Casais com Cristo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #7b2d8b;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        /* ── Loading UI ── */
+        #loading-ui {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.2rem;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        #loading-ui .logo-cruz {
+            font-size: 3rem;
+            line-height: 1;
+            animation: pulso 1.8s ease-in-out infinite;
+        }
+
+        @keyframes pulso {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50%       { transform: scale(1.1); opacity: 1; }
+        }
+
+        #loading-ui h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+
+        #loading-ui h1 span {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 300;
+            opacity: 0.8;
+            letter-spacing: 0.2px;
+            margin-top: 4px;
+        }
+
+        #loading-ui .igreja {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.65);
+            letter-spacing: 0.3px;
+        }
+
+        #frase-tela {
+            font-size: 0.92rem;
+            font-style: italic;
+            color: rgba(255,255,255,0.92);
+            line-height: 1.6;
+            max-width: 340px;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px;
+            border-left: 3px solid rgba(255,255,255,0.5);
+            text-align: left;
+        }
+
+        #container-barra {
+            width: 220px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #barra {
+            width: 0%;
+            height: 100%;
+            background: #fff;
+            border-radius: 2px;
+            transition: width 0.08s linear;
+        }
+
+        /* ── Cross traverse animation ── */
+        #cross-wrapper {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .cruz-catolica {
+            position: relative;
+            width: 12px;
+            height: 140px;
+            background-color: rgba(255,255,255,0.95);
+            opacity: 0;
+        }
+
+        .cruz-catolica::after {
+            content: '';
+            position: absolute;
+            width: 70px;
+            height: 12px;
+            background-color: rgba(255,255,255,0.95);
+            top: 35px;
+            left: -29px;
+        }
+
+        .animar-atravessar {
+            animation: atravessar 1.8s cubic-bezier(0.55, 0.05, 0.67, 0.19) forwards;
+        }
+
+        @keyframes atravessar {
+            0%   { opacity: 0; transform: scale(0.1); }
+            30%  { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(60); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-ui">
+        <div class="logo-cruz">✝</div>
+        <h1>ECC <span>Encontro de Casais com Cristo</span></h1>
+        <p class="igreja">Igreja Matriz Nossa Senhora do Perpétuo Socorro – Maracanau</p>
+        <p id="frase-tela"></p>
+        <div id="container-barra"><div id="barra"></div></div>
+    </div>
+
+    <div id="cross-wrapper">
+        <div class="cruz-catolica" id="cruz"></div>
+    </div>
+
+    <script>
+        const FRASES = [
+            '"Tudo posso naquele que me fortalece." — Fil 4,13',
+            '"Deus é amor, e quem permanece no amor permanece em Deus." — 1 Jo 4,16',
+            '"O Senhor é meu pastor e nada me faltará." — Sl 23,1',
+            '"Amai-vos uns aos outros como Eu vos amei." — Jo 15,12',
+            '"Que a paz de Cristo reine em vossos corações." — Cl 3,15',
+            '"São José, guardião da Sagrada Família, rogai por nós."',
+            '"A família que ora unida permanece unida." — Beato Pe. Patrick Peyton',
+            '"O amor é paciente, o amor é bondoso." — 1 Cor 13,4',
+            '"Onde há caridade e amor, aí está Deus." — Antífona Litúrgica',
+            '"Feliz o povo que tem o Senhor como seu Deus." — Sl 33,12',
+            '"Buscai primeiro o Reino de Deus e a sua justiça." — Mt 6,33',
+            '"Com Deus tudo, sem Deus nada." — Santo Agostinho',
+            '"Amar é querer o bem do outro." — Santo Tomás de Aquino',
+            '"A oração é a respiração da alma." — São João Vianney',
+            '"Não temas, pois Eu estou contigo." — Is 41,10',
+            '"Nossa Senhora do Perpétuo Socorro, rogai por nós."',
+            '"São Francisco de Sales, patrono dos casais, rogai por nós."',
+            '"O amor conjugal é imagem do amor de Deus pela humanidade." — Familiaris Consortio',
+        ];
+
+        document.getElementById('frase-tela').textContent =
+            FRASES[Math.floor(Math.random() * FRASES.length)];
+
+        let progresso = 0;
+        const barra = document.getElementById('barra');
+        const ui    = document.getElementById('loading-ui');
+        const cruz  = document.getElementById('cruz');
+
+        const carregar = setInterval(() => {
+            progresso++;
+            barra.style.width = progresso + '%';
+
+            if (progresso >= 100) {
+                clearInterval(carregar);
+                ui.style.opacity = '0';
+
+                setTimeout(() => {
+                    ui.style.display = 'none';
+                    cruz.style.opacity = '1';
+                    cruz.classList.add('animar-atravessar');
+
+                    // Navigate to main app after animation
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1600);
+                }, 500);
+            }
+        }, 25);
+    </script>
+</body>
+</html>

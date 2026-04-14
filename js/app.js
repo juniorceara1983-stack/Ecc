@@ -297,14 +297,35 @@ function mostrarLoadingScreen(duracao, callback) {
   el.removeAttribute('hidden');
   el.classList.remove('loading-fade-out');
   document.body.style.overflow = 'hidden';
+
+  // Animate progress bar
+  const barEl = $('loading-bar');
+  if (barEl) {
+    barEl.style.width = '0%';
+    let prog = 0;
+    const steps = Math.max(1, Math.floor((duracao - 800) / 30));
+    const barTimer = setInterval(() => {
+      prog = Math.min(100, prog + (100 / steps));
+      barEl.style.width = prog + '%';
+      if (prog >= 100) clearInterval(barTimer);
+    }, 30);
+  }
+
+  // Trigger cross traverse animation near the end, then fade out
   setTimeout(() => {
-    el.classList.add('loading-fade-out');
+    const cruzEl = $('loading-cruz-elem');
+    if (cruzEl) cruzEl.classList.add('loading-cruz-atravessar');
     setTimeout(() => {
-      el.setAttribute('hidden', '');
-      document.body.style.overflow = '';
-      if (callback) callback();
-    }, 500);
-  }, duracao);
+      el.classList.add('loading-fade-out');
+      setTimeout(() => {
+        el.setAttribute('hidden', '');
+        document.body.style.overflow = '';
+        const cruzEl2 = $('loading-cruz-elem');
+        if (cruzEl2) cruzEl2.classList.remove('loading-cruz-atravessar');
+        if (callback) callback();
+      }, 500);
+    }, 700);
+  }, Math.max(0, duracao - 700));
 }
 
 function mostrarLoadingENavegar(url, duracao) {
@@ -316,6 +337,20 @@ function mostrarLoadingENavegar(url, duracao) {
   el.removeAttribute('hidden');
   el.classList.remove('loading-fade-out');
   document.body.style.overflow = 'hidden';
+
+  // Animate progress bar during navigation transition
+  const barEl = $('loading-bar');
+  if (barEl) {
+    barEl.style.width = '0%';
+    let prog = 0;
+    const steps = Math.max(1, Math.floor(duracao / 30));
+    const barTimer = setInterval(() => {
+      prog = Math.min(100, prog + (100 / steps));
+      barEl.style.width = prog + '%';
+      if (prog >= 100) clearInterval(barTimer);
+    }, 30);
+  }
+
   setTimeout(() => { window.location.href = url; }, duracao);
 }
 
@@ -775,6 +810,37 @@ function mostrarPreview(previewEl, dataUrl) {
    CONDITIONAL SECTIONS IN FORM
    =================================================== */
 
+/**
+ * Rebuilds the "pastas-coordenadas" multiselect to only include
+ * the pastas currently checked in "pastas-servidas", since a couple
+ * can only have coordinated a pasta they have already served in.
+ * Any previously checked coordination pastas that are still valid
+ * are preserved.
+ */
+function atualizarPastasCoordenadasDisponiveis() {
+  const servidasListEl = document.querySelector('#pastas-servidas .checkbox-list');
+  const selecionadas = servidasListEl
+    ? Array.from(servidasListEl.querySelectorAll('input:checked')).map((i) => i.value)
+    : [];
+
+  // Remember current coordenadas selections before rebuilding
+  const coordListEl = document.querySelector('#pastas-coordenadas .checkbox-list');
+  const coordAntes  = coordListEl
+    ? Array.from(coordListEl.querySelectorAll('input:checked')).map((i) => i.value)
+    : [];
+
+  // Rebuild with only the served pastas (or empty if none selected)
+  buildCheckboxGroup('pastas-coordenadas', selecionadas, 'pcoord', false, true);
+
+  // Restore valid previous selections
+  coordAntes.forEach((pasta) => {
+    const cb = document.querySelector(`#pastas-coordenadas input[value="${pasta}"]`);
+    if (cb) cb.checked = true;
+  });
+
+  syncAndUpdateMultiselect('pastas-coordenadas');
+}
+
 function configurarSecoesCond() {
   document.querySelectorAll('input[name="serviu"]').forEach((radio) => {
     radio.addEventListener('change', () => {
@@ -798,6 +864,8 @@ function configurarSecoesCond() {
     radio.addEventListener('change', () => {
       const secCoord = $('secao-coord');
       if (secCoord) secCoord.hidden = radio.value !== 'sim';
+      // Refresh available coordination pastas when section becomes visible
+      if (radio.value === 'sim') atualizarPastasCoordenadasDisponiveis();
     });
   });
 
@@ -807,6 +875,16 @@ function configurarSecoesCond() {
       if (secDir) secDir.hidden = radio.value !== 'sim';
     });
   });
+
+  // Whenever pastas-servidas selections change, update pastas-coordenadas options
+  const pastasServidasEl = $('pastas-servidas');
+  if (pastasServidasEl) {
+    pastasServidasEl.addEventListener('change', (e) => {
+      if (e.target.matches('input[type="checkbox"]')) {
+        atualizarPastasCoordenadasDisponiveis();
+      }
+    });
+  }
 }
 
 /* ===================================================
@@ -834,7 +912,7 @@ function resetForm() {
   if (prevEsposa) prevEsposa.innerHTML = '';
 
   buildCheckboxGroup('pastas-servidas',    PASTAS,           'pserv',  false, true);
-  buildCheckboxGroup('pastas-coordenadas', PASTAS,           'pcoord', false, true);
+  buildCheckboxGroup('pastas-coordenadas', [],               'pcoord', false, true);
   buildCheckboxGroup('pasta-dirigente',    PASTAS_DIRIGENTE, 'pdir',   true,  true);
   buildCheckboxGroup('pastas-gostaria',    PASTAS,           'pgost',  false, true);
 
@@ -871,6 +949,9 @@ function popularForm(casal) {
       const cb = document.querySelector(`#pastas-servidas input[value="${pasta}"]`);
       if (cb) cb.checked = true;
     });
+
+    // Update available coordination pastas to match what was served
+    atualizarPastasCoordenadasDisponiveis();
 
     if (casal.jaFoiCoordenador !== null && casal.jaFoiCoordenador !== undefined) {
       const val   = casal.jaFoiCoordenador ? 'sim' : 'nao';
