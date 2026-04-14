@@ -797,6 +797,13 @@ tbody td { padding: 1rem; font-size: 0.9rem; vertical-align: middle; }
   margin-bottom: 0.5rem;
 }
 
+.form-hint {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  font-style: italic;
+}
+
 /* ---------- View Detalhes ---------- */
 .view-fotos {
   display: flex;
@@ -1484,6 +1491,63 @@ textarea.form-control {
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+/* Loading progress bar */
+.loading-bar-wrap {
+  width: 200px;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: rgba(255,255,255,0.9);
+  border-radius: 2px;
+  transition: width 0.08s linear;
+}
+
+/* Cross traverse animation overlay */
+.loading-cruz-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.loading-cruz-elem {
+  position: relative;
+  width: 12px;
+  height: 140px;
+  background-color: rgba(255,255,255,0.95);
+  opacity: 0;
+}
+
+.loading-cruz-elem::after {
+  content: '';
+  position: absolute;
+  width: 70px;
+  height: 12px;
+  background-color: rgba(255,255,255,0.95);
+  top: 35px;
+  left: -29px;
+}
+
+.loading-cruz-atravessar {
+  animation: loading-cruz-pass 1.2s cubic-bezier(0.55, 0.05, 0.67, 0.19) forwards;
+}
+
+@keyframes loading-cruz-pass {
+  0%   { opacity: 0; transform: scale(0.1); }
+  30%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(50); }
 }
 
 /* ---------- Multiselect Dropdown (form checkboxes) ---------- */
