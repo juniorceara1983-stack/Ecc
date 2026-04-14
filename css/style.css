@@ -1581,11 +1581,10 @@ textarea.form-control {
 
 /* ---------- Multiselect Dropdown (form checkboxes) ---------- */
 .multiselect-wrapper {
-  border: 2px solid var(--gray-200);
-  border-radius: var(--radius);
-  overflow: hidden;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
   background: #fff;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .multiselect-wrapper.open {
@@ -1599,16 +1598,21 @@ textarea.form-control {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.6rem 0.9rem;
+  padding: 0.55rem 0.85rem;
   background: transparent;
   border: none;
   cursor: pointer;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--gray-800);
   font-family: inherit;
   text-align: left;
   transition: background 0.15s;
+  border-radius: 8px;
+}
+
+.multiselect-wrapper.open .multiselect-toggle {
+  border-radius: 8px 8px 0 0;
 }
 
 .multiselect-toggle:hover { background: var(--gray-50); }
@@ -1619,13 +1623,17 @@ textarea.form-control {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--gray-600);
+  color: var(--gray-400);
+  font-size: 0.88rem;
 }
 
-.multiselect-label.has-selection { color: var(--brand-dark); }
+.multiselect-label.has-selection {
+  color: var(--brand-dark);
+  font-weight: 600;
+}
 
 .multiselect-arrow {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--gray-400);
   transition: transform 0.2s ease;
   flex-shrink: 0;
@@ -1637,11 +1645,12 @@ textarea.form-control {
 }
 
 .multiselect-body {
-  border-top: 1px solid var(--gray-200);
-  padding: 0.6rem;
-  background: var(--gray-50);
+  border-top: 1.5px solid var(--gray-200);
+  padding: 0;
+  background: #fff;
   max-height: 220px;
   overflow-y: auto;
+  border-radius: 0 0 8px 8px;
 }
 
 .multiselect-body[hidden] { display: none; }
@@ -1649,22 +1658,28 @@ textarea.form-control {
 .checkbox-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
 }
 
 .checkbox-list label {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.45rem 0.6rem;
-  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
   cursor: pointer;
   font-size: 0.88rem;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--gray-800);
-  transition: background 0.15s;
+  transition: background 0.12s;
   margin-bottom: 0;
   user-select: none;
+  border-bottom: 1px solid var(--gray-100);
+  background: #fff;
+}
+
+.checkbox-list label:last-child {
+  border-bottom: none;
+  border-radius: 0 0 8px 8px;
 }
 
 .checkbox-list label:hover {
@@ -1675,16 +1690,17 @@ textarea.form-control {
 .checkbox-list label.is-checked {
   background: var(--brand-light);
   color: var(--brand-dark);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .checkbox-list input[type="checkbox"],
 .checkbox-list input[type="radio"] {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
   accent-color: var(--brand);
   cursor: pointer;
+  margin: 0;
 }
 
 /* ---------- Nunca serviram filter group ---------- */
