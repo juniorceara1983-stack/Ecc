@@ -671,6 +671,13 @@ function buildCheckboxGroup(containerId, pastas, prefix, singleSelect = false, a
   });
 }
 
+function syncRadioGroupClasses() {
+  document.querySelectorAll('.radio-group input[type="radio"]').forEach((input) => {
+    const label = input.closest('label');
+    if (label) label.classList.toggle('is-checked', input.checked);
+  });
+}
+
 function syncCheckboxGridClasses(containerId) {
   const el = $(containerId);
   if (!el) return;
@@ -917,6 +924,7 @@ function resetForm() {
   buildCheckboxGroup('pastas-gostaria',    PASTAS,           'pgost',  false, true);
 
   configurarSecoesCond();
+  syncRadioGroupClasses();
   const tituloEl = $('modal-titulo');
   if (tituloEl) tituloEl.textContent = 'Cadastro de Casal';
 }
@@ -985,6 +993,7 @@ function popularForm(casal) {
   }
 
   ['pastas-servidas', 'pastas-coordenadas', 'pasta-dirigente', 'pastas-gostaria'].forEach(syncAndUpdateMultiselect);
+  syncRadioGroupClasses();
 }
 
 /* ===================================================
@@ -1350,6 +1359,13 @@ document.addEventListener('change', (e) => {
   if (e.target.matches('.checkbox-list input')) {
     const label = e.target.closest('label');
     if (label) label.classList.toggle('is-checked', e.target.checked);
+  }
+  if (e.target.matches('.radio-group input[type="radio"]')) {
+    const name = e.target.name;
+    document.querySelectorAll(`input[name="${CSS.escape(name)}"]`).forEach((r) => {
+      const label = r.closest('label');
+      if (label) label.classList.toggle('is-checked', r.checked);
+    });
   }
 });
 
