@@ -285,6 +285,41 @@ function mostrarFraseNoLogin(idElemento) {
 }
 
 /* ===================================================
+   LOADING SCREEN
+   =================================================== */
+
+function mostrarLoadingScreen(duracao, callback) {
+  const el = $('loading-screen');
+  if (!el) { if (callback) callback(); return; }
+  const fraseEl = $('loading-frase');
+  if (fraseEl) fraseEl.textContent = getFraseAleatoria();
+  // Ensure visible (it may already be visible on page load)
+  el.removeAttribute('hidden');
+  el.classList.remove('loading-fade-out');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => {
+    el.classList.add('loading-fade-out');
+    setTimeout(() => {
+      el.setAttribute('hidden', '');
+      document.body.style.overflow = '';
+      if (callback) callback();
+    }, 500);
+  }, duracao);
+}
+
+function mostrarLoadingENavegar(url, duracao) {
+  duracao = duracao || 1500;
+  const el = $('loading-screen');
+  if (!el) { window.location.href = url; return; }
+  const fraseEl = $('loading-frase');
+  if (fraseEl) fraseEl.textContent = getFraseAleatoria();
+  el.removeAttribute('hidden');
+  el.classList.remove('loading-fade-out');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => { window.location.href = url; }, duracao);
+}
+
+/* ===================================================
    SESSION AUTH HELPERS
    =================================================== */
 
@@ -462,7 +497,14 @@ if (formDirLogin) {
 if (btnLogoutDir) {
   btnLogoutDir.addEventListener('click', () => {
     logoutDir();
-    window.location.href = 'index.html';
+    mostrarLoadingENavegar('index.html');
+  });
+}
+
+if (btnVoltarEcc) {
+  btnVoltarEcc.addEventListener('click', (e) => {
+    e.preventDefault();
+    mostrarLoadingENavegar('index.html');
   });
 }
 
@@ -511,10 +553,74 @@ if (formMudarSenha) {
    POPULATE CHECKBOX GROUPS
    =================================================== */
 
-function buildCheckboxGroup(containerId, pastas, prefix, singleSelect = false) {
+function buildCheckboxGroup(containerId, pastas, prefix, singleSelect = false, accordion = false) {
   const el = $(containerId);
   if (!el) return;
   el.innerHTML = '';
+
+  if (accordion) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'multiselect-wrapper';
+    wrapper.dataset.prefix = prefix;
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'multiselect-toggle';
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'multiselect-label';
+    labelSpan.textContent = 'Nenhuma selecionada';
+
+    const arrowSpan = document.createElement('span');
+    arrowSpan.className = 'multiselect-arrow';
+    arrowSpan.textContent = '▾';
+
+    toggleBtn.appendChild(labelSpan);
+    toggleBtn.appendChild(arrowSpan);
+
+    const body = document.createElement('div');
+    body.className = 'multiselect-body';
+    body.hidden = true;
+
+    const listEl = document.createElement('div');
+    listEl.className = 'checkbox-list';
+    listEl.id = containerId + '-list';
+
+    pastas.forEach((pasta) => {
+      const id = `${prefix}-${pasta.replace(/\s+/g, '-').toLowerCase()}`;
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      input.type = singleSelect ? 'radio' : 'checkbox';
+      if (singleSelect) input.name = prefix;
+      input.value = pasta;
+      input.id = id;
+      label.htmlFor = id;
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(' ' + pasta));
+      listEl.appendChild(label);
+    });
+
+    body.appendChild(listEl);
+    wrapper.appendChild(toggleBtn);
+    wrapper.appendChild(body);
+    el.appendChild(wrapper);
+
+    toggleBtn.addEventListener('click', () => {
+      body.hidden = !body.hidden;
+      wrapper.classList.toggle('open', !body.hidden);
+    });
+
+    listEl.addEventListener('change', () => {
+      const checked = listEl.querySelectorAll('input:checked');
+      labelSpan.textContent = checked.length === 0
+        ? 'Nenhuma selecionada'
+        : Array.from(checked).map((i) => i.value).join(', ');
+      labelSpan.classList.toggle('has-selection', checked.length > 0);
+    });
+
+    return;
+  }
+
   pastas.forEach((pasta) => {
     const id    = `${prefix}-${pasta.replace(/\s+/g, '-').toLowerCase()}`;
     const label = document.createElement('label');
@@ -539,6 +645,25 @@ function syncCheckboxGridClasses(containerId) {
   });
 }
 
+function syncAndUpdateMultiselect(containerId) {
+  const el = $(containerId);
+  if (!el) return;
+  el.querySelectorAll('input').forEach((input) => {
+    const label = input.closest('label');
+    if (label) label.classList.toggle('is-checked', input.checked);
+  });
+  const wrapper = el.querySelector('.multiselect-wrapper');
+  if (!wrapper) return;
+  const listEl = wrapper.querySelector('.checkbox-list');
+  const labelEl = wrapper.querySelector('.multiselect-label');
+  if (!listEl || !labelEl) return;
+  const checked = listEl.querySelectorAll('input:checked');
+  labelEl.textContent = checked.length === 0
+    ? 'Nenhuma selecionada'
+    : Array.from(checked).map((i) => i.value).join(', ');
+  labelEl.classList.toggle('has-selection', checked.length > 0);
+}
+
 // Build pasta filter checkboxes (admin.html)
 buildCheckboxGroup('filtro-pastas', PASTAS, 'fpasta');
 
@@ -550,6 +675,17 @@ if (sugestaoPastaSelect) {
     opt.value = pasta;
     opt.textContent = pasta;
     sugestaoPastaSelect.appendChild(opt);
+  });
+}
+
+// Populate nunca-serviu pasta filter select (admin.html)
+const nuncaServiuPastaSelect = $('nunca-serviu-pasta-select');
+if (nuncaServiuPastaSelect) {
+  PASTAS.forEach((pasta) => {
+    const opt = document.createElement('option');
+    opt.value = pasta;
+    opt.textContent = pasta;
+    nuncaServiuPastaSelect.appendChild(opt);
   });
 }
 
@@ -697,10 +833,10 @@ function resetForm() {
   if (prevEsposo) prevEsposo.innerHTML = '';
   if (prevEsposa) prevEsposa.innerHTML = '';
 
-  buildCheckboxGroup('pastas-servidas',    PASTAS,           'pserv');
-  buildCheckboxGroup('pastas-coordenadas', PASTAS,           'pcoord');
-  buildCheckboxGroup('pasta-dirigente',    PASTAS_DIRIGENTE, 'pdir', true);
-  buildCheckboxGroup('pastas-gostaria',    PASTAS,           'pgost');
+  buildCheckboxGroup('pastas-servidas',    PASTAS,           'pserv',  false, true);
+  buildCheckboxGroup('pastas-coordenadas', PASTAS,           'pcoord', false, true);
+  buildCheckboxGroup('pasta-dirigente',    PASTAS_DIRIGENTE, 'pdir',   true,  true);
+  buildCheckboxGroup('pastas-gostaria',    PASTAS,           'pgost',  false, true);
 
   configurarSecoesCond();
   const tituloEl = $('modal-titulo');
@@ -767,7 +903,7 @@ function popularForm(casal) {
     });
   }
 
-  ['pastas-servidas', 'pastas-coordenadas', 'pasta-dirigente', 'pastas-gostaria'].forEach(syncCheckboxGridClasses);
+  ['pastas-servidas', 'pastas-coordenadas', 'pasta-dirigente', 'pastas-gostaria'].forEach(syncAndUpdateMultiselect);
 }
 
 /* ===================================================
@@ -1130,6 +1266,10 @@ document.addEventListener('change', (e) => {
     const label = e.target.closest('label');
     if (label) label.classList.toggle('is-checked', e.target.checked);
   }
+  if (e.target.matches('.checkbox-list input')) {
+    const label = e.target.closest('label');
+    if (label) label.classList.toggle('is-checked', e.target.checked);
+  }
 });
 
 /* ===================================================
@@ -1285,12 +1425,54 @@ if (btnAjudaRetiro) {
 const btnNuncaServiram        = $('btn-nunca-serviram');
 const btnBaixarSugestao       = $('btn-baixar-sugestao');
 const btnBaixarRelatorioPasta = $('btn-baixar-relatorio-pasta');
+const btnNuncaServiramFiltrar = $('btn-nunca-serviram-filtrar');
+const btnBaixarNuncaServiram  = $('btn-baixar-nunca-serviram');
 
 if (btnNuncaServiram) {
   btnNuncaServiram.addEventListener('click', () => {
     filtroAtivo = (lista) => lista.filter((c) => !c.jaServiu);
     if (labelFiltroAtivo) labelFiltroAtivo.textContent = '(Nunca Serviram)';
     renderTabelaDirigente(aplicarFiltrosAtivos());
+  });
+}
+
+if (btnNuncaServiramFiltrar) {
+  btnNuncaServiramFiltrar.addEventListener('click', () => {
+    const pasta = nuncaServiuPastaSelect ? nuncaServiuPastaSelect.value : '';
+    filtroAtivo = (lista) => {
+      const nunca = lista.filter((c) => !c.jaServiu);
+      return pasta ? nunca.filter((c) => (c.gostariaDeServir || []).includes(pasta)) : nunca;
+    };
+    if (labelFiltroAtivo) {
+      labelFiltroAtivo.textContent = pasta
+        ? `(Nunca Serviram – Interesse: ${pasta})`
+        : '(Nunca Serviram)';
+    }
+    renderTabelaDirigente(aplicarFiltrosAtivos());
+  });
+}
+
+if (btnBaixarNuncaServiram) {
+  btnBaixarNuncaServiram.addEventListener('click', () => {
+    const lista = aplicarFiltrosAtivos();
+    if (!lista.length) {
+      alert('Nenhum resultado disponível. Aplique um filtro primeiro.');
+      return;
+    }
+    const pasta  = nuncaServiuPastaSelect ? nuncaServiuPastaSelect.value : '';
+    const titulo = pasta
+      ? `Casais que Nunca Serviram – Interesse: ${pasta}`
+      : 'Casais que Nunca Serviram';
+    const cabecalho = ['Esposo', 'Esposa', 'Tel. Esposo', 'Tel. Esposa', 'Ano Retiro', 'Gostaria de Servir em'];
+    const linhas = lista.map((c) => [
+      c.nomeEsposo || '',
+      c.nomeEsposa || '',
+      c.telEsposo  || '',
+      c.telEsposa  || '',
+      c.anoRetiro  || '',
+      (c.gostariaDeServir || []).join('; '),
+    ]);
+    baixarPDF(titulo, cabecalho, linhas);
   });
 }
 
@@ -1517,47 +1699,51 @@ carregar();
 
 // index.html init
 if ($('tbody-casais')) {
-  renderTabela();
-  atualizarEstadoBotaoCadastro();
+  mostrarLoadingScreen(2200, () => {
+    renderTabela();
+    atualizarEstadoBotaoCadastro();
 
-  if (isEccLogado()) {
-    ocultarEccLogin();
-    const nomeLogado = sessionStorage.getItem('ecc_casal_nome');
-    atualizarNomeLogado(nomeLogado || '');
-  } else {
-    mostrarEccLogin();
-  }
+    if (isEccLogado()) {
+      ocultarEccLogin();
+      const nomeLogado = sessionStorage.getItem('ecc_casal_nome');
+      atualizarNomeLogado(nomeLogado || '');
+    } else {
+      mostrarEccLogin();
+    }
+  });
 }
 
 // admin.html init
 if ($('tbody-dirigente')) {
   renderTabelaDirigente(casais);
 
-  // Load persisted admin password from Google Sheets (survives cache clear / reinstall)
-  carregarSenhaDoSheets().then((senhaSalva) => {
-    if (senhaSalva) setSenha(senhaSalva);
+  mostrarLoadingScreen(2200, () => {
+    // Load persisted admin password from Google Sheets (survives cache clear / reinstall)
+    carregarSenhaDoSheets().then((senhaSalva) => {
+      if (senhaSalva) setSenha(senhaSalva);
 
-    if (isDirLogado()) {
-      mostrarPainelDirigente();
-      renderListaBloqueios();
-      // Auto-fetch couples from Google Sheets if local cache is empty
-      if (casais.length === 0) {
-        _autoImportarDoSheets();
+      if (isDirLogado()) {
+        mostrarPainelDirigente();
+        renderListaBloqueios();
+        // Auto-fetch couples from Google Sheets if local cache is empty
+        if (casais.length === 0) {
+          _autoImportarDoSheets();
+        }
+      } else {
+        mostrarDirLogin();
       }
-    } else {
-      mostrarDirLogin();
-    }
-  }).catch((err) => {
-    console.warn('Erro ao carregar senha do Sheets:', err);
-    if (isDirLogado()) {
-      mostrarPainelDirigente();
-      renderListaBloqueios();
-      if (casais.length === 0) {
-        _autoImportarDoSheets();
+    }).catch((err) => {
+      console.warn('Erro ao carregar senha do Sheets:', err);
+      if (isDirLogado()) {
+        mostrarPainelDirigente();
+        renderListaBloqueios();
+        if (casais.length === 0) {
+          _autoImportarDoSheets();
+        }
+      } else {
+        mostrarDirLogin();
       }
-    } else {
-      mostrarDirLogin();
-    }
+    });
   });
 }
 
