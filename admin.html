@@ -38,7 +38,6 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="admin-tab-gestao">📋 Gestão</button>
       <button class="tab-btn" data-tab="admin-tab-comunicados">📢 Comunicados</button>
-      <button class="tab-btn" data-tab="admin-tab-homilias">📹 Homilias</button>
       <button class="tab-btn" data-tab="admin-tab-config">⚙️ Configurações</button>
     </div>
     <button id="btn-logout-dir" class="btn btn-outline btn-sm">Sair</button>
@@ -153,42 +152,7 @@
       </div>
     </section>
 
-    <!-- ===== TAB 3: HOMILIAS / VÍDEOS ===== -->
-    <section id="admin-tab-homilias" class="tab-panel">
-      <div class="panel-header">
-        <h2>📹 Homilias e Vídeos</h2>
-      </div>
-
-      <div class="tool-card comunicado-form-card">
-        <h3>➕ Enviar Texto + Imagem para Gerar Vídeo</h3>
-        <p class="tool-desc">O robô na VPS irá converter o texto em áudio (Piper) e gerar o vídeo (FFmpeg) automaticamente.</p>
-        <form id="form-homilia" novalidate>
-          <label class="form-label-full mt-half">Título
-            <input type="text" id="hom-titulo" class="form-control" placeholder="Ex: Evangelho de hoje..." required />
-          </label>
-          <label class="mt-half">Texto / Conteúdo
-            <textarea id="hom-texto" class="form-control" rows="6" placeholder="Cole aqui o texto que será lido pelo robô..."></textarea>
-          </label>
-          <label class="mt-half">Imagem de Fundo (opcional)
-            <input type="file" id="hom-imagem" class="form-control" accept="image/*" />
-            <div id="hom-preview" class="comunicado-img-preview"></div>
-          </label>
-          <p id="hom-msg" class="sheets-msg" hidden></p>
-          <button type="submit" class="btn btn-primary btn-block mt-1">🎬 Gerar Áudio e Vídeo</button>
-        </form>
-      </div>
-
-      <h3 class="section-subtitle">🎬 Vídeos Gerados</h3>
-      <p class="tool-desc" style="margin-bottom:0.5rem;">
-        Vídeos da liturgia diária (gerados automaticamente às 6h) e envios manuais.
-      </p>
-      <button id="btn-atualizar-videos" class="btn btn-secondary" style="margin-bottom:1rem;">🔄 Atualizar Lista</button>
-      <div id="lista-videos-admin" class="comunicados-admin-list">
-        <p class="msg-vazio visivel">Carregando vídeos...</p>
-      </div>
-    </section>
-
-    <!-- ===== TAB 4: CONFIGURAÇÕES ===== -->
+    <!-- ===== TAB 3: CONFIGURAÇÕES ===== -->
     <section id="admin-tab-config" class="tab-panel">
       <div class="panel-header">
         <h2>Configurações</h2>
