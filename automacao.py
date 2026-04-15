@@ -1,4 +1,5 @@
 import time
+import base64
 import threading
 import subprocess
 import os
@@ -27,10 +28,10 @@ MEU_IP = "SEU_IP"   # <-- ALTERE AQUI
 # CONFIGURAÇÃO MYSQL
 # =============================================================================
 DB_CONFIG = {
-    "host":     "localhost",
-    "user":     "bot_igreja",
-    "password": "MinhaSenha123",  # <-- use a mesma senha do bot.sql
-    "database": "paroquia_db",
+    "host":     os.environ.get("DB_HOST",     "localhost"),
+    "user":     os.environ.get("DB_USER",     "bot_igreja"),
+    "password": os.environ.get("DB_PASSWORD", "MinhaSenha123"),  # defina DB_PASSWORD no ambiente
+    "database": os.environ.get("DB_NAME",     "paroquia_db"),
     "charset":  "utf8mb4",
 }
 
@@ -41,13 +42,16 @@ def get_db():
 def db_exec(sql, params=None, fetch=False):
     """Helper: executa SQL e retorna resultados opcionalmente."""
     conn = get_db()
-    cur  = conn.cursor(dictionary=True)
-    cur.execute(sql, params or ())
-    result = cur.fetchall() if fetch else None
-    conn.commit()
-    cur.close()
-    conn.close()
-    return result
+    try:
+        cur = conn.cursor(dictionary=True)
+        cur.execute(sql, params or ())
+        result = cur.fetchall() if fetch else None
+        if not fetch:
+            conn.commit()
+        cur.close()
+        return result
+    finally:
+        conn.close()
 
 # =============================================================================
 # FUNÇÃO: BUSCAR LITURGIA CANÇÃO NOVA
@@ -174,7 +178,7 @@ def bot_processador():
             hora    = agora.hour
 
             # 1. Uma vez por dia às 6h, busca a liturgia automaticamente
-            if ultima_busca_dia != hoje and hora >= 6:
+            if ultima_busca_dia != hoje and 6 <= hora < 7:
                 t, c = buscar_liturgia_cancao_nova()
                 if t and c:
                     db_exec(
@@ -220,7 +224,6 @@ def receber_homilia():
     imagem_path = ''
     if imagem_b64 and imagem_b64.startswith('data:image'):
         try:
-            import base64
             header, encoded = imagem_b64.split(',', 1)
             ext = 'jpg' if 'jpeg' in header else 'png'
             imagem_path = os.path.join(PASTA_TRABALHO, f"fundo_{item_id}.{ext}")
@@ -238,7 +241,8 @@ def receber_homilia():
         )
         return jsonify({"status": "enfileirado", "id": item_id}), 200
     except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+        print(f"Erro ao inserir homilia: {e}")
+        return jsonify({"erro": "Erro ao salvar no banco de dados."}), 500
 
 
 @app.route('/listar-videos', methods=['GET'])
@@ -260,7 +264,8 @@ def listar_videos():
             })
         return jsonify({"ok": True, "videos": resultado}), 200
     except Exception as e:
-        return jsonify({"ok": False, "erro": str(e)}), 500
+        print(f"Erro ao listar vídeos: {e}")
+        return jsonify({"ok": False, "erro": "Erro ao consultar banco de dados."}), 500
 
 
 @app.route('/status-homilia/<int:item_id>', methods=['GET'])
@@ -282,7 +287,8 @@ def status_homilia(item_id):
             "url":    r['url_video'],
         }), 200
     except Exception as e:
-        return jsonify({"ok": False, "erro": str(e)}), 500
+        print(f"Erro ao consultar status: {e}")
+        return jsonify({"ok": False, "erro": "Erro ao consultar banco de dados."}), 500
 
 
 @app.route('/download/<path:nome_arquivo>', methods=['GET'])
