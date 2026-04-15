@@ -39,6 +39,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="tab-ecc">🏠 Início</button>
       <button class="tab-btn" data-tab="tab-comunicados">📢 Comunicados</button>
+      <button class="tab-btn" data-tab="tab-homilias">📹 Homilias</button>
       <button class="tab-btn" data-tab="tab-quiz">🎯 Quiz</button>
     </div>
     <div class="header-right">
@@ -90,7 +91,20 @@
       </div>
     </section>
 
-    <!-- ===== TAB 3: QUIZ ===== -->
+    <!-- ===== TAB 3: HOMILIAS / VÍDEOS ===== -->
+    <section id="tab-homilias" class="tab-panel">
+      <div class="panel-header">
+        <h2>📹 Liturgia em Vídeo</h2>
+      </div>
+      <p class="tool-desc" style="text-align:center;margin-bottom:1rem;">
+        Vídeos da liturgia diária e homilias gerados pelo robô da paróquia.
+      </p>
+      <div id="lista-videos-pub" class="comunicados-grid">
+        <p class="msg-vazio visivel">Carregando vídeos...</p>
+      </div>
+    </section>
+
+    <!-- ===== TAB 4: QUIZ ===== -->
     <section id="tab-quiz" class="tab-panel">
       <div class="panel-header">
         <h2>🎯 Quiz do ECC</h2>
