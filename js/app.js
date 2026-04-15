@@ -68,6 +68,10 @@ const ECC_CASAL_REGISTRADO_KEY = 'ecc_casal_registrado';
 const ECC_INSCRICAO_KEY        = 'ecc_inscricao_bloqueada';
 const ECC_CASAL_ID_KEY         = 'ecc_casal_id';
 
+// URL do robô Flask rodando na VPS (substitua pelo IP real da sua máquina)
+// Exemplo: 'http://123.45.67.89:5000'
+const BOT_URL = 'http://SEU_IP:5000';  // <-- ALTERE AQUI
+
 /* ===================================================
    STATE
    =================================================== */
@@ -2823,5 +2827,162 @@ if (btnBaixarRankingQuiz) {
     </body></html>`);
     win.document.close();
     setTimeout(() => win.print(), 500);
+  });
+}
+
+/* ===================================================
+   BOT / HOMILIAS — API HELPERS
+   =================================================== */
+
+async function listarVideosDoBot() {
+  try {
+    const res  = await fetch(`${BOT_URL}/listar-videos`);
+    const data = await res.json();
+    return data.ok && Array.isArray(data.videos) ? data.videos : [];
+  } catch (e) {
+    console.warn('Erro ao listar vídeos do bot:', e);
+    return [];
+  }
+}
+
+async function enviarHomiliaParaBot(titulo, texto, imagemBase64) {
+  try {
+    const res = await fetch(`${BOT_URL}/nova-homilia`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ titulo, texto, imagem: imagemBase64 || '' }),
+    });
+    return await res.json();
+  } catch (e) {
+    console.warn('Erro ao enviar homilia:', e);
+    return { erro: String(e) };
+  }
+}
+
+/* ===================================================
+   HOMILIAS — RENDER (Public — index.html)
+   =================================================== */
+
+function renderVideoCard(v) {
+  return `
+    <div class="comunicado-card">
+      <div class="comunicado-card-body">
+        <span class="comunicado-card-date">📅 ${esc(v.data)}</span>
+        <div class="comunicado-card-title">🎬 ${esc(v.titulo)}</div>
+      </div>
+      <div class="comunicado-card-footer">
+        <video controls style="width:100%;border-radius:8px;max-height:220px;" preload="none">
+          <source src="${esc(v.url)}" type="video/mp4" />
+          Seu navegador não suporta vídeos HTML5.
+        </video>
+      </div>
+    </div>`;
+}
+
+async function renderVideosPub() {
+  const container = $('lista-videos-pub');
+  if (!container) return;
+  container.innerHTML = '<p class="msg-vazio visivel">Carregando vídeos...</p>';
+  const videos = await listarVideosDoBot();
+  if (!videos.length) {
+    container.innerHTML = '<p class="msg-vazio visivel">Nenhum vídeo disponível no momento.</p>';
+    return;
+  }
+  container.innerHTML = videos.map(renderVideoCard).join('');
+}
+
+if ($('lista-videos-pub')) renderVideosPub();
+
+/* ===================================================
+   HOMILIAS — RENDER (Admin — admin.html)
+   =================================================== */
+
+async function renderVideosAdmin() {
+  const container = $('lista-videos-admin');
+  if (!container) return;
+  container.innerHTML = '<p class="msg-vazio visivel">Carregando...</p>';
+  const videos = await listarVideosDoBot();
+  if (!videos.length) {
+    container.innerHTML = '<p class="msg-vazio visivel">Nenhum vídeo gerado ainda.</p>';
+    return;
+  }
+  container.innerHTML = videos.map((v) => `
+    <div class="comunicado-admin-item">
+      <div class="comunicado-admin-thumb" style="background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:1.8rem;border-radius:8px;">🎬</div>
+      <div class="comunicado-admin-info">
+        <div class="comunicado-admin-title">${esc(v.titulo)}</div>
+        <div class="comunicado-admin-meta">📅 ${esc(v.data)}</div>
+        <div class="comunicado-admin-desc">
+          <a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">▶ Assistir</a>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+const btnAtualizarVideos = $('btn-atualizar-videos');
+if (btnAtualizarVideos) {
+  btnAtualizarVideos.addEventListener('click', () => renderVideosAdmin());
+}
+
+if ($('lista-videos-admin')) renderVideosAdmin();
+
+/* ===================================================
+   HOMILIAS — ADMIN FORM (admin.html)
+   =================================================== */
+
+const formHomilia   = $('form-homilia');
+const homImgInput   = $('hom-imagem');
+const homPreview    = $('hom-preview');
+const homMsg        = $('hom-msg');
+
+function _setHomMsg(msg, tipo) {
+  if (!homMsg) return;
+  homMsg.textContent = msg;
+  homMsg.className = 'sheets-msg msg-' + tipo;
+  homMsg.removeAttribute('hidden');
+  if (tipo !== 'loading') setTimeout(() => homMsg.setAttribute('hidden', ''), 5000);
+}
+
+if (homImgInput) {
+  homImgInput.addEventListener('change', () => {
+    const file = homImgInput.files[0];
+    if (!file || !homPreview) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      homPreview.innerHTML = `<img src="${ev.target.result}" alt="Preview" />`;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+if (formHomilia) {
+  formHomilia.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const titulo = ($('hom-titulo') || {}).value?.trim() || '';
+    const texto  = ($('hom-texto')  || {}).value?.trim() || '';
+    if (!titulo) { alert('Informe o título.'); return; }
+    if (!texto)  { alert('Informe o texto.'); return; }
+
+    _setHomMsg('Enviando para o robô...', 'loading');
+
+    let imagemBase64 = '';
+    if (homImgInput && homImgInput.files[0]) {
+      imagemBase64 = await new Promise((res) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => res(ev.target.result);
+        reader.onerror = () => res('');
+        reader.readAsDataURL(homImgInput.files[0]);
+      });
+    }
+
+    const resp = await enviarHomiliaParaBot(titulo, texto, imagemBase64);
+    if (resp && !resp.erro) {
+      _setHomMsg('✅ Enviado! O robô irá gerar o vídeo em breve.', 'ok');
+      formHomilia.reset();
+      if (homPreview) homPreview.innerHTML = '';
+      setTimeout(() => renderVideosAdmin(), 3000);
+    } else {
+      _setHomMsg('❌ Erro: ' + (resp.erro || 'Verifique se o robô está rodando na VPS.'), 'erro');
+    }
   });
 }
